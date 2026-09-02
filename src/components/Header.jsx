@@ -16,7 +16,7 @@ export default function Header({ onCartClick, cartCount, settings }) {
         </div>
       </div>
 
-      <div className="bg-paper border-b border-crust/10">
+      <div className="bg-paper border-b border-crust/10 rounded-t-3xl -mt-6 relative z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
         <div className="max-w-3xl mx-auto px-4 flex flex-col items-center text-center">
           <img
             src={logoUrl}
