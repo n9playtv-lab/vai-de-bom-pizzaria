@@ -12,21 +12,18 @@ export default function Header({ onCartClick, cartCount, settings }) {
 
       <div className="bg-paper border-b border-crust/10">
         <div className="max-w-3xl mx-auto px-4">
-          <div className="flex items-end justify-between -mt-10 pb-4">
-            <div className="flex items-end gap-3">
-              <img
-                src={logoUrl}
-                alt={name}
-                className="w-20 h-20 rounded-full object-cover border-4 border-paper shadow-md flex-shrink-0"
-              />
-              <div className="pb-1">
-                <h1 className="text-2xl leading-tight text-crust">{name}</h1>
-                <p className="text-sm text-crust/60">{tagline}</p>
-              </div>
-            </div>
+          <img
+            src={logoUrl}
+            alt={name}
+            className="w-20 h-20 rounded-full object-cover border-4 border-paper shadow-md -mt-10 relative z-10"
+          />
+
+          <div className="pt-2 pb-1">
+            <h1 className="text-2xl leading-tight text-crust">{name}</h1>
+            <p className="text-sm text-crust/60">{tagline}</p>
           </div>
 
-          <div className="flex items-center justify-between pb-3">
+          <div className="flex items-center justify-between pb-3 pt-1">
             <span className="inline-flex items-center gap-1.5 text-sm text-basil font-medium">
               <span className="w-2 h-2 rounded-full bg-basil inline-block" />
               Aberto agora
