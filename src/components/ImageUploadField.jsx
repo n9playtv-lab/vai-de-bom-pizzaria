@@ -67,7 +67,6 @@ export default function ImageUploadField({ label, value, onChange, folder = 'upl
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={handleFile}
       />
