@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cardapio: qualquer pessoa pode ler, so admin autenticado pode escrever
+    match /menu/{itemId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Pedidos: qualquer cliente pode criar um pedido novo (checkout publico),
+    // mas so admin autenticado pode ler a lista e mudar o status.
+    // O cliente consegue ler APENAS o pedido especifico dele (ele ja tem o ID pela URL).
+    match /orders/{orderId} {
+      allow create: if true;
+      allow get: if true;
+      allow list: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+  }
+}

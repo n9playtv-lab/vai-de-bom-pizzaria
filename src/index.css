@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-crust font-body antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  /* linha de cardapio classico: nome ..... preco */
+  .menu-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .menu-row .dots {
+    flex: 1;
+    border-bottom: 1.5px dotted #C9BBA3;
+    margin-bottom: 4px;
+    min-width: 12px;
+  }
+  .btn-primary {
+    @apply bg-tomato text-paper font-semibold px-5 py-3 rounded-sm hover:bg-tomatodark transition-colors;
+  }
+  .btn-outline {
+    @apply border border-crust/30 text-crust font-medium px-5 py-3 rounded-sm hover:border-crust transition-colors;
+  }
+  .input-field {
+    @apply w-full border border-crust/25 bg-paper px-4 py-3 rounded-sm focus:outline-none focus:border-tomato text-crust;
+  }
+}
