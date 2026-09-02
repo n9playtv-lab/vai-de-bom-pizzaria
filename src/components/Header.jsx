@@ -1,13 +1,20 @@
+import { getStoreStatus } from '../utils/storeHours.js'
+
 export default function Header({ onCartClick, cartCount, settings }) {
   const name = settings?.name || 'Vai de Bom'
   const tagline = settings?.tagline || 'Pizzaria — Abreu e Lima, PE'
   const coverUrl = settings?.coverUrl || '/images/cover.webp'
   const logoUrl = settings?.logoUrl || '/images/logo.webp'
+  const rating = settings?.rating || '5.0'
+  const status = getStoreStatus(settings)
 
   return (
     <div>
-      <div className="w-full h-40 sm:h-52 overflow-hidden">
+      <div className="relative w-full h-40 sm:h-52 overflow-hidden">
         <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-3 right-3 bg-crust/90 text-paper rounded-full px-3 py-1.5 flex items-center gap-1 text-sm font-semibold">
+          <span className="text-gold">★</span> {rating}
+        </div>
       </div>
 
       <div className="bg-paper border-b border-crust/10">
@@ -23,11 +30,23 @@ export default function Header({ onCartClick, cartCount, settings }) {
             <p className="text-sm text-crust/60">{tagline}</p>
           </div>
 
-          <div className="flex items-center justify-between pb-3 pt-1">
-            <span className="inline-flex items-center gap-1.5 text-sm text-basil font-medium">
-              <span className="w-2 h-2 rounded-full bg-basil inline-block" />
-              Aberto agora
+          <div className="flex items-center gap-2 pb-2 pt-1">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
             </span>
+            <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
+              {status.open ? (status.closeLabel ? `Aberto até ${status.closeLabel}` : 'Aberto agora') : 'Fechado'}
+            </span>
+          </div>
+
+          {!status.open && (
+            <div className="pb-2">
+              <span className="text-xs text-crust/50 border-t border-crust/10 pt-2 block">Indisponível para pedidos no momento</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end pb-3">
             <button
               onClick={onCartClick}
               className="relative border border-crust/20 rounded-sm px-4 py-2 text-sm text-crust hover:border-tomato transition-colors flex-shrink-0"

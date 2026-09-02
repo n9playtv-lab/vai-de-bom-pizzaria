@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
 
-export default function CartDrawer({ open, onClose }) {
+export default function CartDrawer({ open, onClose, storeOpen = true }) {
   const { items, updateQty, subtotal } = useCart()
   const navigate = useNavigate()
 
@@ -54,11 +54,11 @@ export default function CartDrawer({ open, onClose }) {
             <span>{formatCurrency(subtotal)}</span>
           </div>
           <button
-            disabled={items.length === 0}
+            disabled={items.length === 0 || !storeOpen}
             onClick={() => { onClose(); navigate('/checkout') }}
             className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Revisar pedido
+            {storeOpen ? 'Revisar pedido' : 'Pizzaria fechada no momento'}
           </button>
         </div>
       </div>

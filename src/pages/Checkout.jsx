@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore'
+import { useEffect } from 'react'
 import { db } from '../firebase.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { getStoreStatus } from '../utils/storeHours.js'
 
 const STEPS = ['Revisão', 'Entrega', 'Pagamento']
 
@@ -11,11 +13,23 @@ export default function Checkout() {
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [storeOpen, setStoreOpen] = useState(true)
   const navigate = useNavigate()
   const cart = useCart()
   const { items, subtotal, customer, setCustomer, address, setAddress, payment, setPayment, clearCart } = cart
 
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
+      setStoreOpen(getStoreStatus(snap.exists() ? snap.data() : null).open)
+    })
+    return unsub
+  }, [])
+
   async function handleConfirm() {
+    if (!storeOpen) {
+      setError('A pizzaria está fechada no momento. Tente novamente durante o horário de funcionamento.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
@@ -70,7 +84,7 @@ export default function Checkout() {
           <StepPayment
             payment={payment} setPayment={setPayment} subtotal={subtotal}
             onBack={() => setStep(1)} onConfirm={handleConfirm}
-            submitting={submitting} error={error}
+            submitting={submitting} error={error} storeOpen={storeOpen}
           />
         )}
       </div>
@@ -141,7 +155,7 @@ function StepAddress({ customer, setCustomer, address, setAddress, onBack, onNex
   )
 }
 
-function StepPayment({ payment, setPayment, subtotal, onBack, onConfirm, submitting, error }) {
+function StepPayment({ payment, setPayment, subtotal, onBack, onConfirm, submitting, error, storeOpen }) {
   const changeForValue = payment.changeFor ? parseFloat(payment.changeFor.replace(',', '.')) : null
   const troco = payment.method === 'dinheiro' && changeForValue ? changeForValue - subtotal : null
   const trocoInvalido = troco !== null && troco < 0
@@ -190,10 +204,11 @@ function StepPayment({ payment, setPayment, subtotal, onBack, onConfirm, submitt
       </div>
 
       {error && <p className="text-tomato text-sm mb-3">{error}</p>}
+      {!storeOpen && <p className="text-tomato text-sm mb-3">A pizzaria está fechada no momento.</p>}
 
       <div className="flex gap-3">
         <button onClick={onBack} className="btn-outline flex-1">Voltar</button>
-        <button disabled={!valid || submitting} onClick={onConfirm} className="btn-primary flex-1 disabled:opacity-40">
+        <button disabled={!valid || submitting || !storeOpen} onClick={onConfirm} className="btn-primary flex-1 disabled:opacity-40">
           {submitting ? 'Enviando...' : 'Confirmar pedido'}
         </button>
       </div>
