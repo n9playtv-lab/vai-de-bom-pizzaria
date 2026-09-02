@@ -10,11 +10,9 @@ export default function Header({ onCartClick, cartCount, settings }) {
   const rating = settings?.rating || '5.0'
   const status = getStoreStatus(settings)
 
-  const statusText = status.open
-    ? 'Delivery Disponível'
-    : status.opensAt
-      ? `Fechado, abrimos hoje às ${status.opensAt}`
-      : 'Fechado'
+  const timeText = status.open
+    ? (status.closeLabel ? `Aberto até ${status.closeLabel}` : 'Aberto agora')
+    : (status.opensAt ? `Fechado, abrimos ${status.opensLabel} às ${status.opensAt}` : 'Fechado')
 
   return (
     <div>
@@ -33,30 +31,30 @@ export default function Header({ onCartClick, cartCount, settings }) {
             className="w-24 h-24 rounded-full object-cover border-4 border-paper shadow-md -mt-12 relative z-10"
           />
 
-          <h1 className="text-2xl leading-tight text-crust mt-2 mb-3">{name}</h1>
+          <h1 className="text-2xl leading-tight text-crust mt-2 mb-1">{name}</h1>
 
-          <button onClick={() => setInfoOpen(true)} className="w-full flex items-center justify-between py-3">
+          <button onClick={() => setInfoOpen(true)} className="w-full flex items-center justify-between py-2.5">
             <span className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
                 <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
               </span>
               <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
-                {statusText}
+                {timeText}
               </span>
             </span>
             <span className="text-crust/30 text-lg">›</span>
           </button>
 
-          {!status.open && (
-            <button
-              onClick={() => setInfoOpen(true)}
-              className="w-full flex items-center justify-between py-3 border-t border-crust/10"
-            >
-              <span className="text-sm text-crust/60">Indisponível para pedidos</span>
-              <span className="text-crust/30 text-lg">›</span>
-            </button>
-          )}
+          <button
+            onClick={() => setInfoOpen(true)}
+            className="w-full flex items-center justify-between py-2.5 border-t border-crust/10"
+          >
+            <span className={`text-sm ${status.open ? 'text-basil font-medium' : 'text-crust/60'}`}>
+              {status.open ? 'Delivery Disponível' : 'Indisponível para pedidos'}
+            </span>
+            <span className="text-crust/30 text-lg">›</span>
+          </button>
 
           <div className="w-full flex justify-end pb-3 pt-1 border-t border-crust/10">
             <button

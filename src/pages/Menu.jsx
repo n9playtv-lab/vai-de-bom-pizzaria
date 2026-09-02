@@ -70,10 +70,10 @@ export default function Menu() {
           <div className="relative flex-1">
             <button
               onClick={() => setCategoryMenuOpen((v) => !v)}
-              className="input-field flex items-center justify-between text-left"
+              className="w-full flex items-center justify-between text-left text-sm border border-crust/20 rounded-sm px-3 py-2.5 bg-paper text-crust/70"
             >
               <span>{activeCategory || 'Categorias'}</span>
-              <span className="text-crust/40">{categoryMenuOpen ? '▲' : '▼'}</span>
+              <span className="text-crust/40 text-xs">{categoryMenuOpen ? '▲' : '▼'}</span>
             </button>
             {categoryMenuOpen && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-paper border border-crust/15 rounded-sm shadow-lg z-30 max-h-72 overflow-y-auto">
@@ -91,7 +91,7 @@ export default function Menu() {
           </div>
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="w-12 h-12 flex-shrink-0 flex items-center justify-center border border-crust/25 rounded-sm text-crust/60 hover:border-tomato"
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center border border-crust/20 rounded-sm text-crust/50 text-sm"
             aria-label="Buscar"
           >
             🔍
