@@ -33,22 +33,20 @@ export default function Header({ onCartClick, cartCount, settings }) {
 
           <h1 className="text-2xl leading-tight text-crust mt-2 mb-1">{name}</h1>
 
-          <button onClick={() => setInfoOpen(true)} className="w-full flex items-center justify-between py-2.5">
-            <span className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
-              </span>
-              <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
-                {timeText}
-              </span>
+          <button onClick={() => setInfoOpen(true)} className="w-full flex items-center justify-center gap-2 py-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+            </span>
+            <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
+              {timeText}
             </span>
             <span className="text-crust/30 text-lg">›</span>
           </button>
 
           <button
             onClick={() => setInfoOpen(true)}
-            className="w-full flex items-center justify-between py-2.5 border-t border-crust/10"
+            className="w-full flex items-center justify-center gap-2 py-2.5 border-t border-crust/10"
           >
             <span className={`text-sm ${status.open ? 'text-basil font-medium' : 'text-crust/60'}`}>
               {status.open ? 'Delivery Disponível' : 'Indisponível para pedidos'}
