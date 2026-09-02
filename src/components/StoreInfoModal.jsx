@@ -19,32 +19,29 @@ export default function StoreInfoModal({ open, onClose, settings }) {
     .filter(Boolean)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-crust/50" onClick={onClose} />
-      <div className="relative bg-paper w-full sm:max-w-lg sm:rounded-sm max-h-[85vh] flex flex-col">
-        <div className="px-5 py-4 border-b border-crust/10 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-xl">{name}</h2>
-          <button onClick={onClose} className="text-crust/50 hover:text-crust text-xl leading-none">✕</button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-paper flex flex-col">
+      <div className="px-5 py-4 border-b border-crust/10 flex items-center justify-between flex-shrink-0">
+        <h2 className="text-xl">{name}</h2>
+        <button onClick={onClose} className="text-crust/50 hover:text-crust text-xl leading-none">✕</button>
+      </div>
 
-        <div className="flex border-b border-crust/10 flex-shrink-0 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap ${tab === t ? 'text-tomato border-b-2 border-tomato' : 'text-crust/50'}`}
-            >
-              {t.toUpperCase()}
-            </button>
-          ))}
-        </div>
+      <div className="flex border-b border-crust/10 flex-shrink-0 overflow-x-auto">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-3 text-sm font-medium whitespace-nowrap ${tab === t ? 'text-tomato border-b-2 border-tomato' : 'text-crust/50'}`}
+          >
+            {t.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
-        <div className="overflow-y-auto p-5">
-          {tab === 'Sobre' && <SobreTab logoUrl={logoUrl} phone={phone} instagram={instagram} address={address} />}
-          {tab === 'Horário' && <HorarioTab hours={settings?.hours} />}
-          {tab === 'Pagamento' && <PagamentoTab pixKey={pixKey} />}
-          {tab === 'Entrega' && <EntregaTab areas={deliveryAreas} />}
-        </div>
+      <div className="overflow-y-auto p-5 flex-1 max-w-3xl mx-auto w-full">
+        {tab === 'Sobre' && <SobreTab logoUrl={logoUrl} phone={phone} instagram={instagram} address={address} />}
+        {tab === 'Horário' && <HorarioTab hours={settings?.hours} />}
+        {tab === 'Pagamento' && <PagamentoTab pixKey={pixKey} />}
+        {tab === 'Entrega' && <EntregaTab areas={deliveryAreas} />}
       </div>
     </div>
   )

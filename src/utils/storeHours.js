@@ -19,17 +19,17 @@ function toMinutes(hhmm) {
   return h * 60 + m
 }
 
-// Retorna { open: boolean, closeLabel: string|null }
+// Retorna { open: boolean, closeLabel: string|null, opensAt: string|null }
 export function getStoreStatus(settings) {
-  if (!settings) return { open: true, closeLabel: null }
-  if (settings.statusOverride === 'open') return { open: true, closeLabel: null, forced: true }
-  if (settings.statusOverride === 'closed') return { open: false, closeLabel: null, forced: true }
+  if (!settings) return { open: true, closeLabel: null, opensAt: null }
+  if (settings.statusOverride === 'open') return { open: true, closeLabel: null, opensAt: null, forced: true }
+  if (settings.statusOverride === 'closed') return { open: false, closeLabel: null, opensAt: null, forced: true }
 
   const hours = settings.hours || defaultHours()
   const now = new Date()
   const day = now.getDay()
   const today = hours[day]
-  if (!today || today.closed) return { open: false, closeLabel: null }
+  if (!today || today.closed) return { open: false, closeLabel: null, opensAt: null }
 
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const openMin = toMinutes(today.open)
@@ -43,5 +43,9 @@ export function getStoreStatus(settings) {
     isOpen = nowMin >= openMin || nowMin < closeMin
   }
 
-  return { open: isOpen, closeLabel: isOpen ? today.close : today.open }
+  return {
+    open: isOpen,
+    closeLabel: isOpen ? today.close : null,
+    opensAt: !isOpen ? today.open : null,
+  }
 }

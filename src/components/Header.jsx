@@ -10,6 +10,12 @@ export default function Header({ onCartClick, cartCount, settings }) {
   const rating = settings?.rating || '5.0'
   const status = getStoreStatus(settings)
 
+  const statusText = status.open
+    ? 'Delivery Disponível'
+    : status.opensAt
+      ? `Fechado, abrimos hoje às ${status.opensAt}`
+      : 'Fechado'
+
   return (
     <div>
       <div className="relative w-full h-40 sm:h-52 overflow-hidden">
@@ -19,7 +25,7 @@ export default function Header({ onCartClick, cartCount, settings }) {
         </div>
       </div>
 
-      <div className="bg-paper border-b border-crust/10 rounded-t-3xl -mt-6 relative z-10 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+      <div className="bg-paper rounded-t-3xl -mt-6 relative z-10 shadow-[0_-4px_16px_rgba(0,0,0,0.1)]">
         <div className="max-w-3xl mx-auto px-4 flex flex-col items-center text-center">
           <img
             src={logoUrl}
@@ -27,31 +33,35 @@ export default function Header({ onCartClick, cartCount, settings }) {
             className="w-24 h-24 rounded-full object-cover border-4 border-paper shadow-md -mt-12 relative z-10"
           />
 
-          <h1 className="text-2xl leading-tight text-crust mt-2">{name}</h1>
+          <h1 className="text-2xl leading-tight text-crust mt-2 mb-3">{name}</h1>
 
-          <button onClick={() => setInfoOpen(true)} className="flex items-center gap-2 py-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+          <button onClick={() => setInfoOpen(true)} className="w-full flex items-center justify-between py-3">
+            <span className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
+              </span>
+              <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
+                {statusText}
+              </span>
             </span>
-            <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
-              {status.open ? (status.closeLabel ? `Aberto até ${status.closeLabel}` : 'Aberto agora') : 'Fechado'}
-            </span>
+            <span className="text-crust/30 text-lg">›</span>
           </button>
 
           {!status.open && (
             <button
               onClick={() => setInfoOpen(true)}
-              className="text-xs text-crust/50 underline underline-offset-2 border-t border-crust/10 pt-2 pb-1 w-full"
+              className="w-full flex items-center justify-between py-3 border-t border-crust/10"
             >
-              Indisponível para pedidos no momento
+              <span className="text-sm text-crust/60">Indisponível para pedidos</span>
+              <span className="text-crust/30 text-lg">›</span>
             </button>
           )}
 
-          <div className="w-full flex justify-end pb-3 pt-1">
+          <div className="w-full flex justify-end pb-3 pt-1 border-t border-crust/10">
             <button
               onClick={onCartClick}
-              className="relative border border-crust/20 rounded-sm px-4 py-2 text-sm text-crust hover:border-tomato transition-colors flex-shrink-0"
+              className="relative border border-crust/20 rounded-sm px-4 py-2 mt-3 text-sm text-crust hover:border-tomato transition-colors flex-shrink-0"
             >
               Carrinho
               {cartCount > 0 && (
