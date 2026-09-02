@@ -76,6 +76,7 @@ function AdminNav() {
         <div className="flex gap-6">
           <Link to="/admin/pedidos" className="font-semibold">Pedidos</Link>
           <Link to="/admin/cardapio" className="text-paper/70 hover:text-paper">Cardápio</Link>
+          <Link to="/admin/configuracoes" className="text-paper/70 hover:text-paper">Configurações</Link>
         </div>
         <button onClick={() => signOut(auth)} className="text-paper/70 hover:text-paper text-sm">Sair</button>
       </div>

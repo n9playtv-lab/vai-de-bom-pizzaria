@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth'
 import { Link } from 'react-router-dom'
 import { db, auth } from '../../firebase.js'
 import { formatCurrency } from '../../utils/formatCurrency.js'
+import ImageUploadField from '../../components/ImageUploadField.jsx'
 
 const EMPTY_FORM = { name: '', description: '', price: '', category: '', imageUrl: '', available: true, order: 0 }
 
@@ -50,6 +51,7 @@ export default function AdminMenuEditor() {
           <div className="flex gap-6">
             <Link to="/admin/pedidos" className="text-paper/70 hover:text-paper">Pedidos</Link>
             <Link to="/admin/cardapio" className="font-semibold">Cardápio</Link>
+            <Link to="/admin/configuracoes" className="text-paper/70 hover:text-paper">Configurações</Link>
           </div>
           <button onClick={() => signOut(auth)} className="text-paper/70 hover:text-paper text-sm">Sair</button>
         </div>
@@ -68,12 +70,14 @@ export default function AdminMenuEditor() {
             onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <input className="input-field" placeholder="Descrição (ingredientes)" value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <div className="flex gap-3">
-            <input className="input-field" placeholder="Preço (ex: 39,90)" value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })} required />
-            <input className="input-field flex-1" placeholder="URL da foto (opcional)" value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
-          </div>
+          <input className="input-field" placeholder="Preço (ex: 39,90)" value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })} required />
+          <ImageUploadField
+            label="Foto do item (opcional)"
+            value={form.imageUrl}
+            onChange={(url) => setForm({ ...form, imageUrl: url })}
+            folder="menu"
+          />
           <div className="flex gap-3">
             <button type="submit" className="btn-primary">{editingId ? 'Salvar alterações' : 'Adicionar ao cardápio'}</button>
             {editingId && (

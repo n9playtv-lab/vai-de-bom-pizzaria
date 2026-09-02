@@ -33,7 +33,20 @@ firebase deploy --only firestore:rules
 Entre em `/admin`, faça login com o usuário criado no passo 1, vá em **Cardápio** e
 cadastre as pizzas (categoria, nome, descrição, preço, foto).
 
-### 5. WhatsApp automático (Cloud API da Meta)
+### 5. Ativar upload de imagens (Firebase Storage)
+1. No console do Firebase → **Storage** → **Vamos começar** (aceita a região sugerida)
+   - ⚠️ O Google exige um plano **Blaze** (pay-as-you-go) pra criar o Storage. É só cadastrar um
+     cartão — o uso de uma pizzaria fica muito abaixo da faixa gratuita (5GB grátis por mês),
+     então na prática não deve gerar cobrança.
+2. Publique as regras de segurança do Storage:
+```bash
+firebase deploy --only storage
+```
+Depois disso, em **Configurações → Aparência** (`/admin/configuracoes`) você já consegue subir
+o banner de capa e o logo direto do celular, e em **Cardápio** consegue tirar foto ou escolher
+da galeria pra cada pizza.
+
+### 6. WhatsApp automático (Cloud API da Meta)
 1. Crie um app em https://developers.facebook.com/apps → adicione o produto **WhatsApp**
 2. Copie o **Token de acesso temporário** (ou gere um permanente) e o **Phone Number ID**
 3. Configure nas Functions:
@@ -47,7 +60,7 @@ firebase deploy --only functions
 Sem isso configurado, o site funciona normalmente — só não manda WhatsApp automático
 (fica registrado no log da function).
 
-### 6. Publicar no Netlify
+### 7. Publicar no Netlify
 1. Suba esta pasta num repositório no GitHub
 2. No Netlify: **Add new site → Import an existing project** → selecione o repo
 3. Build command: `npm run build` — Publish directory: `dist` (já configurado no `netlify.toml`)

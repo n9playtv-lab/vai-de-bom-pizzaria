@@ -5,6 +5,7 @@ import OrderStatus from './pages/OrderStatus.jsx'
 import AdminLogin from './pages/admin/AdminLogin.jsx'
 import AdminOrders from './pages/admin/AdminOrders.jsx'
 import AdminMenuEditor from './pages/admin/AdminMenuEditor.jsx'
+import AdminSettings from './pages/admin/AdminSettings.jsx'
 import RequireAdmin from './components/RequireAdmin.jsx'
 
 export default function App() {
@@ -28,6 +29,14 @@ export default function App() {
         element={
           <RequireAdmin>
             <AdminMenuEditor />
+          </RequireAdmin>
+        }
+      />
+      <Route
+        path="/admin/configuracoes"
+        element={
+          <RequireAdmin>
+            <AdminSettings />
           </RequireAdmin>
         }
       />

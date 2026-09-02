@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
@@ -10,6 +10,7 @@ export default function Menu() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [cartOpen, setCartOpen] = useState(false)
+  const [settings, setSettings] = useState(null)
   const { addItem, totalCount } = useCart()
 
   useEffect(() => {
@@ -18,6 +19,13 @@ export default function Menu() {
       setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
       setLoading(false)
     }, () => setLoading(false))
+    return unsub
+  }, [])
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
+      if (snap.exists()) setSettings(snap.data())
+    })
     return unsub
   }, [])
 
@@ -31,7 +39,7 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <Header onCartClick={() => setCartOpen(true)} cartCount={totalCount} />
+      <Header onCartClick={() => setCartOpen(true)} cartCount={totalCount} settings={settings} />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         {loading && <p className="text-crust/60">Carregando cardápio...</p>}
