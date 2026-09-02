@@ -7,9 +7,11 @@ import { getStoreStatus } from '../utils/storeHours.js'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import CartDrawer from '../components/CartDrawer.jsx'
+import FlavorPickerModal from '../components/FlavorPickerModal.jsx'
 
 export default function Menu() {
   const [products, setProducts] = useState([])
+  const [categoryDocs, setCategoryDocs] = useState([])
   const [loading, setLoading] = useState(true)
   const [cartOpen, setCartOpen] = useState(false)
   const [settings, setSettings] = useState(null)
@@ -17,6 +19,7 @@ export default function Menu() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
+  const [pickerCategory, setPickerCategory] = useState(null)
   const { addItem, totalCount } = useCart()
   const sectionRefs = useRef({})
 
@@ -30,6 +33,12 @@ export default function Menu() {
   }, [])
 
   useEffect(() => {
+    const q = query(collection(db, 'categories'), orderBy('order'))
+    const unsub = onSnapshot(q, (snap) => setCategoryDocs(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+    return unsub
+  }, [])
+
+  useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
       if (snap.exists()) setSettings(snap.data())
     })
@@ -37,6 +46,12 @@ export default function Menu() {
   }, [])
 
   const storeStatus = useMemo(() => getStoreStatus(settings), [settings])
+
+  const categoriesByName = useMemo(() => {
+    const map = {}
+    categoryDocs.forEach((c) => { map[c.name] = c })
+    return map
+  }, [categoryDocs])
 
   const categories = useMemo(() => {
     const set = new Set(products.filter((p) => p.available !== false).map((p) => p.category))
@@ -59,6 +74,10 @@ export default function Menu() {
     setActiveCategory(cat)
     setCategoryMenuOpen(false)
     sectionRefs.current[cat]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function handlePickerConfirm(cartLine) {
+    addItem({ id: `${cartLine.name}-${Date.now()}`, name: cartLine.name, price: cartLine.price }, 1, cartLine.notes)
   }
 
   return (
@@ -123,24 +142,76 @@ export default function Menu() {
           <p className="text-crust/60">Nenhum item encontrado para "{search}".</p>
         )}
 
-        {Object.entries(byCategory).map(([category, list]) => (
-          <section
-            key={category}
-            ref={(el) => (sectionRefs.current[category] = el)}
-            className="mb-10 scroll-mt-32"
-          >
-            <h2 className="text-3xl mb-4">{category}</h2>
-            <div className="space-y-5">
-              {list.map((product) => (
-                <MenuItem key={product.id} product={product} onAdd={addItem} storeOpen={storeStatus.open} />
-              ))}
-            </div>
-          </section>
-        ))}
+        {Object.entries(byCategory).map(([categoryName, list]) => {
+          const catConfig = categoriesByName[categoryName]
+          const isSpecial = catConfig?.type === 'pizza' && (catConfig.pizzaCount > 1 || catConfig.allowHalfHalf)
+
+          return (
+            <section
+              key={categoryName}
+              ref={(el) => (sectionRefs.current[categoryName] = el)}
+              className="mb-10 scroll-mt-32"
+            >
+              <h2 className="text-3xl mb-4">{categoryName}</h2>
+
+              {isSpecial ? (
+                <SpecialCategoryCard
+                  category={catConfig}
+                  flavors={list}
+                  storeOpen={storeStatus.open}
+                  onOpenPicker={() => setPickerCategory(catConfig)}
+                />
+              ) : (
+                <div className="space-y-5">
+                  {list.map((product) => (
+                    <MenuItem key={product.id} product={product} onAdd={addItem} storeOpen={storeStatus.open} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )
+        })}
       </main>
 
       <Footer settings={settings} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} storeOpen={storeStatus.open} />
+
+      {pickerCategory && (
+        <FlavorPickerModal
+          open={!!pickerCategory}
+          onClose={() => setPickerCategory(null)}
+          category={pickerCategory}
+          flavors={byCategory[pickerCategory.name] || []}
+          onConfirm={handlePickerConfirm}
+        />
+      )}
+    </div>
+  )
+}
+
+function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
+  const isCombo = category.pizzaCount > 1
+  const minPrice = flavors.length ? Math.min(...flavors.map((f) => f.price)) : 0
+
+  return (
+    <div className="border border-crust/10 rounded-sm p-5">
+      {isCombo ? (
+        <>
+          {category.comboDescription && <p className="text-crust/60 text-sm mb-2">{category.comboDescription}</p>}
+          <p className="text-2xl font-semibold text-tomato mb-3">{formatCurrency(category.comboPrice)}</p>
+        </>
+      ) : (
+        <p className="text-crust/60 text-sm mb-3">
+          Monte sua pizza {category.allowHalfHalf ? '(pode ser meio a meio)' : ''} — a partir de {formatCurrency(minPrice)}
+        </p>
+      )}
+      <button
+        onClick={onOpenPicker}
+        disabled={!storeOpen}
+        className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {!storeOpen ? 'Pizzaria fechada' : 'Escolher sabores'}
+      </button>
     </div>
   )
 }
