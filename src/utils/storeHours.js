@@ -2,7 +2,16 @@ export const WEEKDAYS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-fei
 export const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function defaultHours() {
-  return Array.from({ length: 7 }, () => ({ closed: false, open: '18:00', close: '23:00' }))
+  // index: 0=Domingo, 1=Segunda, 2=Terça ... 6=Sábado
+  return [
+    { closed: false, open: '17:00', close: '23:00' }, // Domingo
+    { closed: true, open: '17:00', close: '23:00' },  // Segunda - fechado
+    { closed: false, open: '17:00', close: '23:00' }, // Terça
+    { closed: false, open: '17:00', close: '23:00' }, // Quarta
+    { closed: false, open: '17:00', close: '23:00' }, // Quinta
+    { closed: false, open: '17:00', close: '23:00' }, // Sexta
+    { closed: false, open: '17:00', close: '23:00' }, // Sábado
+  ]
 }
 
 function toMinutes(hhmm) {

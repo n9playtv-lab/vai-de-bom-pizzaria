@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { getStoreStatus } from '../utils/storeHours.js'
+import StoreInfoModal from './StoreInfoModal.jsx'
 
 export default function Header({ onCartClick, cartCount, settings }) {
+  const [infoOpen, setInfoOpen] = useState(false)
   const name = settings?.name || 'Vai de Bom Pizzaria'
   const coverUrl = settings?.coverUrl || '/images/cover.webp'
   const logoUrl = settings?.logoUrl || '/images/logo.webp'
@@ -26,7 +29,7 @@ export default function Header({ onCartClick, cartCount, settings }) {
 
           <h1 className="text-2xl leading-tight text-crust mt-2">{name}</h1>
 
-          <div className="flex items-center gap-2 py-2">
+          <button onClick={() => setInfoOpen(true)} className="flex items-center gap-2 py-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${status.open ? 'bg-basil' : 'bg-tomato'}`} />
@@ -34,10 +37,15 @@ export default function Header({ onCartClick, cartCount, settings }) {
             <span className={`text-sm font-medium ${status.open ? 'text-basil' : 'text-tomato'}`}>
               {status.open ? (status.closeLabel ? `Aberto até ${status.closeLabel}` : 'Aberto agora') : 'Fechado'}
             </span>
-          </div>
+          </button>
 
           {!status.open && (
-            <span className="text-xs text-crust/50 border-t border-crust/10 pt-2 pb-1 w-full">Indisponível para pedidos no momento</span>
+            <button
+              onClick={() => setInfoOpen(true)}
+              className="text-xs text-crust/50 underline underline-offset-2 border-t border-crust/10 pt-2 pb-1 w-full"
+            >
+              Indisponível para pedidos no momento
+            </button>
           )}
 
           <div className="w-full flex justify-end pb-3 pt-1">
@@ -55,6 +63,8 @@ export default function Header({ onCartClick, cartCount, settings }) {
           </div>
         </div>
       </div>
+
+      <StoreInfoModal open={infoOpen} onClose={() => setInfoOpen(false)} settings={settings} />
     </div>
   )
 }

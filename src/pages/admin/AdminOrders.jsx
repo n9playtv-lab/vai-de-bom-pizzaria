@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { Link } from 'react-router-dom'
 import { db, auth } from '../../firebase.js'
 import { formatCurrency } from '../../utils/formatCurrency.js'
+import { getStoreStatus } from '../../utils/storeHours.js'
 
 const NEXT_STATUS = {
   pendente: [['aceito', 'Aceitar', 'btn-primary'], ['recusado', 'Recusar', 'btn-outline']],
@@ -15,8 +16,16 @@ const NEXT_STATUS = {
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([])
+  const [settings, setSettings] = useState(null)
   const knownIds = useRef(new Set())
   const firstLoad = useRef(true)
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
+      setSettings(snap.exists() ? snap.data() : null)
+    })
+    return unsub
+  }, [])
 
   useEffect(() => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
@@ -59,12 +68,45 @@ export default function AdminOrders() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <AdminNav />
+      <AdminNav settings={settings} />
       <main className="max-w-3xl mx-auto px-4 py-8">
+        <StoreToggle settings={settings} />
         <Section title="Novos pedidos" orders={pending} onUpdate={updateStatus} highlight />
         <Section title="Em andamento" orders={active} onUpdate={updateStatus} />
         <Section title="Finalizados" orders={done} onUpdate={updateStatus} collapsedByDefault />
       </main>
+    </div>
+  )
+}
+
+function StoreToggle({ settings }) {
+  const status = getStoreStatus(settings)
+
+  async function toggle() {
+    const next = status.open ? 'closed' : 'open'
+    await setDoc(doc(db, 'settings', 'general'), { statusOverride: next }, { merge: true })
+  }
+
+  async function setAuto() {
+    await setDoc(doc(db, 'settings', 'general'), { statusOverride: 'auto' }, { merge: true })
+  }
+
+  return (
+    <div className={`flex items-center justify-between border rounded-sm px-4 py-3 mb-6 ${status.open ? 'border-basil/40 bg-basil/5' : 'border-tomato/40 bg-tomato/5'}`}>
+      <div>
+        <p className={`font-semibold ${status.open ? 'text-basil' : 'text-tomato'}`}>
+          Loja {status.open ? 'aberta' : 'fechada'}{settings?.statusOverride && settings.statusOverride !== 'auto' ? ' (manual)' : ''}
+        </p>
+        <p className="text-xs text-crust/50">Clientes {status.open ? 'conseguem' : 'não conseguem'} fazer pedidos agora</p>
+      </div>
+      <div className="flex gap-2">
+        {settings?.statusOverride && settings.statusOverride !== 'auto' && (
+          <button onClick={setAuto} className="text-xs text-crust/50 underline">usar horário</button>
+        )}
+        <button onClick={toggle} className={status.open ? 'btn-outline text-sm px-4 py-2' : 'btn-primary text-sm px-4 py-2'}>
+          {status.open ? 'Fechar loja agora' : 'Abrir loja agora'}
+        </button>
+      </div>
     </div>
   )
 }

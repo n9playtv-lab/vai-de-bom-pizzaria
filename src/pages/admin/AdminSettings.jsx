@@ -10,7 +10,7 @@ const SETTINGS_DOC = doc(db, 'settings', 'general')
 
 const EMPTY = {
   coverUrl: '', logoUrl: '', name: '', tagline: '', rating: '5.0',
-  cnpj: '', address: '', phone: '',
+  cnpj: '', address: '', phone: '', instagram: '', pixKey: '', deliveryAreas: '',
   hours: defaultHours(), statusOverride: 'auto',
 }
 
@@ -146,6 +146,27 @@ export default function AdminSettings() {
               onChange={(e) => setForm({ ...form, address: e.target.value })} />
             <input className="input-field" placeholder="Telefone" value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          </section>
+
+          {/* Painel "Sobre / Pagamento / Entrega" (modal do cliente) */}
+          <section className="space-y-3 border border-crust/10 rounded-sm p-4">
+            <h2 className="font-semibold">Painel de informações (aba "Sobre" que o cliente vê)</h2>
+            <div>
+              <label className="text-sm text-crust/70 block mb-1">Instagram (sem @)</label>
+              <input className="input-field" placeholder="vaidebompizzaria" value={form.instagram}
+                onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-sm text-crust/70 block mb-1">Chave Pix (opcional, aparece na aba Pagamento)</label>
+              <input className="input-field" placeholder="Ex: 81992842266" value={form.pixKey}
+                onChange={(e) => setForm({ ...form, pixKey: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-sm text-crust/70 block mb-1">Bairros de entrega (separados por vírgula)</label>
+              <textarea className="input-field" rows={3} placeholder="Centro, Alto São Miguel, Caetés I, Caetés II..."
+                value={form.deliveryAreas}
+                onChange={(e) => setForm({ ...form, deliveryAreas: e.target.value })} />
+            </div>
           </section>
 
           <button className="btn-primary w-full">{saved ? 'Salvo ✓' : 'Salvar alterações'}</button>
