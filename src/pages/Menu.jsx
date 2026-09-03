@@ -189,7 +189,7 @@ function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
     <button
       onClick={onOpenPicker}
       disabled={!storeOpen}
-      className="w-full text-left border border-crust/10 rounded-sm p-5 hover:border-tomato/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm p-5 hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isCombo ? (
         <>

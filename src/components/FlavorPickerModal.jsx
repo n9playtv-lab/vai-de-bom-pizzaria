@@ -15,8 +15,8 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
 
   const isCombo = slots > 1
 
-  const slotCounts = selections.map((s) => Object.keys(s).length)
-  const allSlotsComplete = slotCounts.every((c) => c >= 1)
+  const slotTotals = selections.map((s) => Object.values(s).reduce((a, b) => a + b, 0))
+  const allSlotsComplete = slotTotals.every((t) => t >= 1)
 
   const filteredFlavors = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -35,17 +35,30 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
 
   if (!open) return null
 
-  function toggleFlavor(slotIndex, flavorId) {
+  function setQty(slotIndex, flavorId, qty) {
     setSelections((prev) => {
       const next = [...prev]
-      const current = { ...next[slotIndex] }
-      if (current[flavorId]) {
-        delete current[flavorId]
-      } else {
-        if (Object.keys(current).length >= maxPerSlot) return prev
-        current[flavorId] = true
-      }
-      next[slotIndex] = current
+      const slot = { ...next[slotIndex] }
+      if (qty <= 0) delete slot[flavorId]
+      else slot[flavorId] = qty
+      next[slotIndex] = slot
+      return next
+    })
+  }
+
+  function currentQty(slotIndex, flavorId) {
+    return selections[slotIndex]?.[flavorId] || 0
+  }
+
+  function slotRemaining(slotIndex) {
+    return maxPerSlot - slotTotals[slotIndex]
+  }
+
+  function selectSingle(slotIndex, flavorId) {
+    setSelections((prev) => {
+      const next = [...prev]
+      const already = !!next[slotIndex]?.[flavorId]
+      next[slotIndex] = already ? {} : { [flavorId]: 1 }
       return next
     })
   }
@@ -53,8 +66,8 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
   function handleConfirm() {
     const notes = selections
       .map((slot, i) => {
-        const ids = Object.keys(slot)
-        const names = ids.map((id) => flavors.find((f) => f.id === id)?.name || '?')
+        const entries = Object.entries(slot).filter(([, qty]) => qty > 0)
+        const names = entries.map(([id]) => flavors.find((f) => f.id === id)?.name || '?')
         const label = names.length > 1 ? names.map((n) => `½ ${n}`).join(' + ') : names[0]
         return slots > 1 ? `${i + 1}ª pizza: ${label}` : label
       })
@@ -116,8 +129,8 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
 
             <div className="px-5 divide-y divide-crust/5">
               {filteredFlavors.map((flavor) => {
-                const selected = !!slot[flavor.id]
-                const full = slotCounts[slotIndex] >= maxPerSlot && !selected
+                const qty = currentQty(slotIndex, flavor.id)
+                const remaining = slotRemaining(slotIndex)
                 return (
                   <div key={flavor.id} className="flex gap-3 items-center py-3">
                     {flavor.imageUrl && (
@@ -128,15 +141,29 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
                       {flavor.description && <p className="text-xs text-crust/50">{flavor.description}</p>}
                       {!isCombo && <p className="text-xs text-crust/60 mt-0.5">{formatCurrency(flavor.price)}</p>}
                     </div>
-                    <button
-                      disabled={full}
-                      className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${
-                        selected ? 'bg-tomato text-paper border-tomato' : full ? 'border-crust/10 text-crust/20' : 'border-crust/20 text-crust/40'
-                      }`}
-                      onClick={() => toggleFlavor(slotIndex, flavor.id)}
-                    >
-                      {selected ? '✓' : '+'}
-                    </button>
+
+                    {maxPerSlot > 1 ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          className="w-7 h-7 border border-crust/20 rounded-sm disabled:opacity-30"
+                          disabled={qty === 0}
+                          onClick={() => setQty(slotIndex, flavor.id, qty - 1)}
+                        >−</button>
+                        <span className="w-5 text-center text-sm">{qty}</span>
+                        <button
+                          className="w-7 h-7 border border-crust/20 rounded-sm disabled:opacity-30"
+                          disabled={remaining === 0}
+                          onClick={() => setQty(slotIndex, flavor.id, qty + 1)}
+                        >+</button>
+                      </div>
+                    ) : (
+                      <button
+                        className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border ${qty > 0 ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/40'}`}
+                        onClick={() => selectSingle(slotIndex, flavor.id)}
+                      >
+                        {qty > 0 ? '✓' : '+'}
+                      </button>
+                    )}
                   </div>
                 )
               })}
