@@ -47,28 +47,21 @@ export default function Menu() {
 
   const storeStatus = useMemo(() => getStoreStatus(settings), [settings])
 
-  const categoriesByName = useMemo(() => {
-    const map = {}
-    categoryDocs.forEach((c) => { map[c.name] = c })
-    return map
-  }, [categoryDocs])
-
-  const categories = useMemo(() => {
-    const set = new Set(products.filter((p) => p.available !== false).map((p) => p.category))
-    return [...set]
-  }, [products])
-
   const byCategory = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return products
-      .filter((p) => p.available !== false)
-      .filter((p) => !term || p.name.toLowerCase().includes(term) || (p.description || '').toLowerCase().includes(term))
-      .reduce((acc, p) => {
-        acc[p.category] = acc[p.category] || []
-        acc[p.category].push(p)
-        return acc
-      }, {})
-  }, [products, search])
+    const map = {}
+    categoryDocs.forEach((cat) => {
+      const items = products.filter((p) =>
+        p.available !== false &&
+        (p.categoryIds || []).includes(cat.id) &&
+        (!term || p.name.toLowerCase().includes(term) || (p.description || '').toLowerCase().includes(term)),
+      )
+      if (items.length > 0) map[cat.name] = { category: cat, items }
+    })
+    return map
+  }, [products, categoryDocs, search])
+
+  const categories = useMemo(() => Object.keys(byCategory), [byCategory])
 
   function scrollToCategory(cat) {
     setActiveCategory(cat)
@@ -138,12 +131,11 @@ export default function Menu() {
           </div>
         )}
 
-        {!loading && products.length > 0 && Object.keys(byCategory).length === 0 && (
-          <p className="text-crust/60">Nenhum item encontrado para "{search}".</p>
+        {!loading && products.length > 0 && categories.length === 0 && (
+          <p className="text-crust/60">Nenhum item encontrado{search ? ` para "${search}"` : ''}.</p>
         )}
 
-        {Object.entries(byCategory).map(([categoryName, list]) => {
-          const catConfig = categoriesByName[categoryName]
+        {Object.entries(byCategory).map(([categoryName, { category: catConfig, items: list }]) => {
           const isSpecial = catConfig?.type === 'pizza' && (catConfig.pizzaCount > 1 || catConfig.allowHalfHalf)
 
           return (
@@ -181,7 +173,7 @@ export default function Menu() {
           open={!!pickerCategory}
           onClose={() => setPickerCategory(null)}
           category={pickerCategory}
-          flavors={byCategory[pickerCategory.name] || []}
+          flavors={byCategory[pickerCategory.name]?.items || []}
           onConfirm={handlePickerConfirm}
         />
       )}

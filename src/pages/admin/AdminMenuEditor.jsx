@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { Link } from 'react-router-dom'
 import { db, auth } from '../../firebase.js'
@@ -7,7 +7,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import ImageUploadField from '../../components/ImageUploadField.jsx'
 
 const EMPTY_CATEGORY = { name: '', type: 'pizza', pizzaCount: 1, allowHalfHalf: false, comboPrice: '', comboDescription: '', order: 0 }
-const EMPTY_ITEM = { name: '', description: '', price: '', category: '', imageUrl: '', available: true, order: 0 }
+const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', available: true, order: 0 }
 
 export default function AdminMenuEditor() {
   const [categories, setCategories] = useState([])
@@ -24,7 +24,7 @@ export default function AdminMenuEditor() {
   }, [])
 
   useEffect(() => {
-    const q = query(collection(db, 'menu'), orderBy('category'), orderBy('order'))
+    const q = query(collection(db, 'menu'), orderBy('order'))
     const unsub = onSnapshot(q, (snap) => setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
     return unsub
   }, [])
@@ -60,22 +60,29 @@ export default function AdminMenuEditor() {
   }
 
   async function removeCat(cat) {
-    const hasItems = products.some((p) => p.category === cat.name)
+    const hasItems = products.some((p) => (p.categoryIds || []).includes(cat.id))
     if (hasItems) {
-      alert('Essa categoria ainda tem itens cadastrados. Exclua ou mude os itens dela primeiro.')
+      alert('Essa categoria ainda tem sabores vinculados. Desmarque ela nos itens antes de excluir.')
       return
     }
     if (confirm(`Remover a categoria "${cat.name}"?`)) await deleteDoc(doc(db, 'categories', cat.id))
   }
 
-  // ---------- Itens / sabores ----------
+  // ---------- Itens / sabores (biblioteca reutilizavel) ----------
   async function handleItemSubmit(e) {
     e.preventDefault()
-    const payload = { ...itemForm, price: parseFloat(String(itemForm.price).replace(',', '.')) || 0, order: Number(itemForm.order) || 0 }
+    const payload = {
+      name: itemForm.name,
+      description: itemForm.description,
+      price: parseFloat(String(itemForm.price).replace(',', '.')) || 0,
+      imageUrl: itemForm.imageUrl,
+      available: itemForm.available !== false,
+      order: Number(itemForm.order) || 0,
+    }
     if (editingItemId) {
       await updateDoc(doc(db, 'menu', editingItemId), payload)
     } else {
-      await addDoc(collection(db, 'menu'), payload)
+      await addDoc(collection(db, 'menu'), { ...payload, categoryIds: [] })
     }
     setItemForm(EMPTY_ITEM)
     setEditingItemId(null)
@@ -91,7 +98,14 @@ export default function AdminMenuEditor() {
   }
 
   async function removeItem(id) {
-    if (confirm('Remover este item do cardápio?')) await deleteDoc(doc(db, 'menu', id))
+    if (confirm('Remover este sabor/item da biblioteca?')) await deleteDoc(doc(db, 'menu', id))
+  }
+
+  async function toggleCategoryForItem(product, catId) {
+    const has = (product.categoryIds || []).includes(catId)
+    await updateDoc(doc(db, 'menu', product.id), {
+      categoryIds: has ? arrayRemove(catId) : arrayUnion(catId),
+    })
   }
 
   return (
@@ -111,7 +125,7 @@ export default function AdminMenuEditor() {
 
         {/* CRIAR CATEGORIA */}
         <form onSubmit={handleCatSubmit} className="border border-crust/10 rounded-sm p-5 mb-6 space-y-3">
-          <h2 className="text-xl mb-2">{editingCatId ? 'Editar categoria' : 'Criar categoria'}</h2>
+          <h2 className="text-xl mb-2">{editingCatId ? 'Editar categoria' : '1. Criar categoria'}</h2>
 
           <input className="input-field" placeholder="Nome da categoria (ex: Pizzas G, Clone de Pizza, Bebidas)"
             value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} required />
@@ -190,17 +204,10 @@ export default function AdminMenuEditor() {
           </div>
         )}
 
-        {/* NOVO ITEM / SABOR */}
+        {/* CRIAR / EDITAR SABOR (biblioteca reutilizavel) */}
         <form onSubmit={handleItemSubmit} className="border border-crust/10 rounded-sm p-5 mb-8 space-y-3">
-          <h2 className="text-xl mb-2">{editingItemId ? 'Editar item' : 'Novo item / sabor'}</h2>
-
-          <select className="input-field" value={itemForm.category} required
-            onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}>
-            <option value="">Selecione a categoria...</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
-            ))}
-          </select>
+          <h2 className="text-xl mb-2">2. {editingItemId ? 'Editar sabor' : 'Criar sabor / item'}</h2>
+          <p className="text-sm text-crust/50 -mt-2">Cada sabor é criado uma única vez. Depois é só marcar em quais categorias ele aparece, na lista abaixo.</p>
 
           <input className="input-field" placeholder="Nome (ex: Pizza de Mussarela)" value={itemForm.name}
             onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} required />
@@ -216,7 +223,7 @@ export default function AdminMenuEditor() {
           />
 
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary">{editingItemId ? 'Salvar alterações' : 'Adicionar ao cardápio'}</button>
+            <button type="submit" className="btn-primary">{editingItemId ? 'Salvar alterações' : 'Criar sabor'}</button>
             {editingItemId && (
               <button type="button" className="btn-outline" onClick={() => { setEditingItemId(null); setItemForm(EMPTY_ITEM) }}>
                 Cancelar
@@ -225,22 +232,46 @@ export default function AdminMenuEditor() {
           </div>
         </form>
 
-        <div className="space-y-2">
+        {/* LISTA DE SABORES + VINCULO COM CATEGORIAS */}
+        <h2 className="text-xl mb-3">3. Sabores cadastrados</h2>
+        {categories.length === 0 && (
+          <p className="text-sm text-crust/50 mb-3">Crie uma categoria acima antes de vincular os sabores.</p>
+        )}
+        <div className="space-y-3">
           {products.map((p) => (
-            <div key={p.id} className="flex items-center justify-between border border-crust/10 rounded-sm px-4 py-3">
-              <div>
-                <p className="font-medium">{p.name} <span className="text-crust/40 text-sm">· {p.category}</span></p>
-                <p className="text-sm text-crust/60">{formatCurrency(p.price)}</p>
+            <div key={p.id} className="border border-crust/10 rounded-sm px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="font-medium">{p.name}</p>
+                  <p className="text-sm text-crust/60">{formatCurrency(p.price)}</p>
+                </div>
+                <div className="flex gap-2 text-sm flex-shrink-0">
+                  <button className="text-crust/60 hover:text-crust" onClick={() => toggleAvailable(p)}>
+                    {p.available !== false ? 'Pausar' : 'Reativar'}
+                  </button>
+                  <button className="text-crust/60 hover:text-crust" onClick={() => startEditItem(p)}>Editar</button>
+                  <button className="text-tomato" onClick={() => removeItem(p.id)}>Excluir</button>
+                </div>
               </div>
-              <div className="flex gap-2 text-sm">
-                <button className="text-crust/60 hover:text-crust" onClick={() => toggleAvailable(p)}>
-                  {p.available !== false ? 'Pausar' : 'Reativar'}
-                </button>
-                <button className="text-crust/60 hover:text-crust" onClick={() => startEditItem(p)}>Editar</button>
-                <button className="text-tomato" onClick={() => removeItem(p.id)}>Excluir</button>
-              </div>
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {categories.map((cat) => {
+                    const active = (p.categoryIds || []).includes(cat.id)
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => toggleCategoryForItem(p, cat.id)}
+                        className={`text-xs px-3 py-1.5 rounded-full border ${active ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/50'}`}
+                      >
+                        {active ? '✓ ' : '+ '}{cat.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           ))}
+          {products.length === 0 && <p className="text-sm text-crust/40">Nenhum sabor criado ainda.</p>}
         </div>
       </main>
     </div>
