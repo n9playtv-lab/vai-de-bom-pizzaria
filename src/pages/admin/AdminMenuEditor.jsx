@@ -6,7 +6,7 @@ import { db, auth } from '../../firebase.js'
 import { formatCurrency } from '../../utils/formatCurrency.js'
 import ImageUploadField from '../../components/ImageUploadField.jsx'
 
-const EMPTY_CATEGORY = { name: '', type: 'pizza', pizzaCount: 1, allowHalfHalf: false, comboPrice: '', comboDescription: '', order: 0 }
+const EMPTY_CATEGORY = { name: '', type: 'pizza', pizzaCount: 1, allowHalfHalf: false, comboPrice: '', comboDescription: '', imageUrl: '', order: 0 }
 const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', available: true, order: 0 }
 
 export default function AdminMenuEditor() {
@@ -36,6 +36,7 @@ export default function AdminMenuEditor() {
       name: catForm.name,
       type: catForm.type,
       order: Number(catForm.order) || 0,
+      imageUrl: catForm.imageUrl || '',
       pizzaCount: catForm.type === 'pizza' ? Math.max(1, Number(catForm.pizzaCount) || 1) : 1,
       allowHalfHalf: catForm.type === 'pizza' ? !!catForm.allowHalfHalf : false,
       comboPrice: 0,
@@ -129,6 +130,13 @@ export default function AdminMenuEditor() {
 
           <input className="input-field" placeholder="Nome da categoria (ex: Pizzas G, Clone de Pizza, Bebidas)"
             value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} required />
+
+          <ImageUploadField
+            label="Imagem da categoria (opcional, aparece no card do cardápio)"
+            value={catForm.imageUrl}
+            onChange={(url) => setCatForm({ ...catForm, imageUrl: url })}
+            folder="categories"
+          />
 
           <div>
             <label className="text-sm text-crust/70 block mb-1">Tipo</label>

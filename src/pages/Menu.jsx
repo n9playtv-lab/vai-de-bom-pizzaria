@@ -181,30 +181,40 @@ export default function Menu() {
   )
 }
 
+const DEFAULT_CATEGORY_IMAGES = {
+  'Clone de Pizzas': '/images/clone-de-pizzas.jpg',
+}
+
 function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
   const isCombo = category.pizzaCount > 1
   const minPrice = flavors.length ? Math.min(...flavors.map((f) => f.price)) : 0
+  const imageUrl = category.imageUrl || DEFAULT_CATEGORY_IMAGES[category.name]
 
   return (
     <button
       onClick={onOpenPicker}
       disabled={!storeOpen}
-      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm p-5 hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm overflow-hidden hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {isCombo ? (
-        <>
-          {category.comboDescription && <p className="text-crust/60 text-sm mb-2">{category.comboDescription}</p>}
-          <p className="text-2xl font-semibold text-tomato">{formatCurrency(category.comboPrice)}</p>
-        </>
-      ) : (
-        <>
-          <p className="text-crust/60 text-sm mb-1">
-            {category.allowHalfHalf ? 'Pode ser meio a meio — toque para montar' : 'Toque para escolher o sabor'}
-          </p>
-          <p className="text-xl font-semibold text-tomato">A partir de {formatCurrency(minPrice)}</p>
-        </>
+      {imageUrl && (
+        <img src={imageUrl} alt={category.name} className="w-full h-40 object-cover" />
       )}
-      {!storeOpen && <p className="text-xs text-crust/40 mt-2">Pizzaria fechada no momento</p>}
+      <div className="p-5">
+        {isCombo ? (
+          <>
+            {category.comboDescription && <p className="text-crust/60 text-sm mb-2">{category.comboDescription}</p>}
+            <p className="text-2xl font-semibold text-tomato">{formatCurrency(category.comboPrice)}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-crust/60 text-sm mb-1">
+              {category.allowHalfHalf ? 'Pode ser meio a meio — toque para montar' : 'Toque para escolher o sabor'}
+            </p>
+            <p className="text-xl font-semibold text-tomato">A partir de {formatCurrency(minPrice)}</p>
+          </>
+        )}
+        {!storeOpen && <p className="text-xs text-crust/40 mt-2">Pizzaria fechada no momento</p>}
+      </div>
     </button>
   )
 }
