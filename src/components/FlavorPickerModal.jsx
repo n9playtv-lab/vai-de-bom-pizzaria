@@ -123,7 +123,7 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
                 </p>
               </div>
               <span className="bg-crust/10 text-crust text-sm px-2 py-1 rounded-sm flex-shrink-0">
-                {slotCounts[slotIndex]}/{maxPerSlot}
+                {slotTotals[slotIndex]}/{maxPerSlot}
               </span>
             </div>
 
