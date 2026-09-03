@@ -150,8 +150,10 @@ function OrderCard({ order, onUpdate, highlight }) {
   const actions = NEXT_STATUS[order.status] || []
   return (
     <div className={`border rounded-sm p-4 ${highlight ? 'border-tomato bg-tomato/5' : 'border-crust/10'}`}>
+      <p className="text-xs font-semibold text-crust/50 mb-2">Pedido #{order.id.slice(0, 6).toUpperCase()}</p>
       <div className="flex justify-between items-start mb-3">
         <div className="text-sm space-y-0.5">
+          <p className="font-semibold text-tomato mb-1">Pedido #{order.id.slice(0, 6).toUpperCase()}</p>
           <p><span className="text-crust/50">Nome:</span> <span className="font-semibold">{order.customer?.name}</span></p>
           <p><span className="text-crust/50">Telefone:</span> {order.customer?.phone}</p>
           <p><span className="text-crust/50">Rua:</span> {order.address?.street}</p>
