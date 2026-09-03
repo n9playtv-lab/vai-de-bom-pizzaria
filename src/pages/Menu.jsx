@@ -186,25 +186,26 @@ function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
   const minPrice = flavors.length ? Math.min(...flavors.map((f) => f.price)) : 0
 
   return (
-    <div className="border border-crust/10 rounded-sm p-5">
+    <button
+      onClick={onOpenPicker}
+      disabled={!storeOpen}
+      className="w-full text-left border border-crust/10 rounded-sm p-5 hover:border-tomato/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
       {isCombo ? (
         <>
           {category.comboDescription && <p className="text-crust/60 text-sm mb-2">{category.comboDescription}</p>}
-          <p className="text-2xl font-semibold text-tomato mb-3">{formatCurrency(category.comboPrice)}</p>
+          <p className="text-2xl font-semibold text-tomato">{formatCurrency(category.comboPrice)}</p>
         </>
       ) : (
-        <p className="text-crust/60 text-sm mb-3">
-          Monte sua pizza {category.allowHalfHalf ? '(pode ser meio a meio)' : ''} — a partir de {formatCurrency(minPrice)}
-        </p>
+        <>
+          <p className="text-crust/60 text-sm mb-1">
+            {category.allowHalfHalf ? 'Pode ser meio a meio — toque para montar' : 'Toque para escolher o sabor'}
+          </p>
+          <p className="text-xl font-semibold text-tomato">A partir de {formatCurrency(minPrice)}</p>
+        </>
       )}
-      <button
-        onClick={onOpenPicker}
-        disabled={!storeOpen}
-        className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {!storeOpen ? 'Pizzaria fechada' : 'Escolher sabores'}
-      </button>
-    </div>
+      {!storeOpen && <p className="text-xs text-crust/40 mt-2">Pizzaria fechada no momento</p>}
+    </button>
   )
 }
 

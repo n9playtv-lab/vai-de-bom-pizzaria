@@ -10,11 +10,19 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
   const slots = category?.pizzaCount || 1
   const maxPerSlot = category?.allowHalfHalf ? 2 : 1
   const [selections, setSelections] = useState(() => Array.from({ length: slots }, () => ({})))
+  const [search, setSearch] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const isCombo = slots > 1
 
-  const slotTotals = selections.map((s) => Object.values(s).reduce((a, b) => a + b, 0))
-  const allSlotsComplete = slotTotals.every((t) => t === maxPerSlot)
+  const slotCounts = selections.map((s) => Object.keys(s).length)
+  const allSlotsComplete = slotCounts.every((c) => c >= 1)
+
+  const filteredFlavors = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return flavors
+    return flavors.filter((f) => f.name.toLowerCase().includes(term) || (f.description || '').toLowerCase().includes(term))
+  }, [flavors, search])
 
   const totalPrice = useMemo(() => {
     if (isCombo) return category.comboPrice || 0
@@ -27,29 +35,17 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
 
   if (!open) return null
 
-  function setQty(slotIndex, flavorId, qty) {
+  function toggleFlavor(slotIndex, flavorId) {
     setSelections((prev) => {
       const next = [...prev]
-      const slot = { ...next[slotIndex] }
-      if (qty <= 0) delete slot[flavorId]
-      else slot[flavorId] = qty
-      next[slotIndex] = slot
-      return next
-    })
-  }
-
-  function currentQty(slotIndex, flavorId) {
-    return selections[slotIndex]?.[flavorId] || 0
-  }
-
-  function slotRemaining(slotIndex) {
-    return maxPerSlot - slotTotals[slotIndex]
-  }
-
-  function selectSingle(slotIndex, flavorId) {
-    setSelections((prev) => {
-      const next = [...prev]
-      next[slotIndex] = { [flavorId]: 1 }
+      const current = { ...next[slotIndex] }
+      if (current[flavorId]) {
+        delete current[flavorId]
+      } else {
+        if (Object.keys(current).length >= maxPerSlot) return prev
+        current[flavorId] = true
+      }
+      next[slotIndex] = current
       return next
     })
   }
@@ -57,21 +53,16 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
   function handleConfirm() {
     const notes = selections
       .map((slot, i) => {
-        const parts = Object.entries(slot).map(([id, qty]) => {
-          const flavor = flavors.find((f) => f.id === id)
-          const label = flavor ? flavor.name : '?'
-          return maxPerSlot > 1 && qty === 1 && Object.keys(slot).length > 1 ? `½ ${label}` : label
-        })
-        return slots > 1 ? `${i + 1}ª pizza: ${parts.join(' + ')}` : parts.join(' + ')
+        const ids = Object.keys(slot)
+        const names = ids.map((id) => flavors.find((f) => f.id === id)?.name || '?')
+        const label = names.length > 1 ? names.map((n) => `½ ${n}`).join(' + ') : names[0]
+        return slots > 1 ? `${i + 1}ª pizza: ${label}` : label
       })
       .join(' | ')
 
-    onConfirm({
-      name: category.name,
-      price: totalPrice,
-      notes,
-    })
+    onConfirm({ name: category.name, price: totalPrice, notes })
     setSelections(Array.from({ length: slots }, () => ({})))
+    setSearch('')
     onClose()
   }
 
@@ -82,8 +73,23 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
           <h2 className="text-xl">{category.name}</h2>
           {isCombo && <p className="text-sm text-crust/60">{category.comboDescription}</p>}
         </div>
-        <button onClick={onClose} className="text-crust/50 hover:text-crust text-xl leading-none">✕</button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button onClick={() => setSearchOpen((v) => !v)} className="text-crust/50 text-lg" aria-label="Buscar sabor">🔍</button>
+          <button onClick={onClose} className="text-crust/50 hover:text-crust text-xl leading-none">✕</button>
+        </div>
       </div>
+
+      {searchOpen && (
+        <div className="px-5 py-3 border-b border-crust/10 flex-shrink-0">
+          <input
+            autoFocus
+            className="input-field"
+            placeholder="Buscar sabor..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
 
       {isCombo && (
         <div className="px-5 py-3 border-b border-crust/10 flex-shrink-0">
@@ -93,8 +99,8 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
 
       <div className="overflow-y-auto flex-1 max-w-3xl mx-auto w-full">
         {selections.map((slot, slotIndex) => (
-          <div key={slotIndex} className="px-5 py-4 border-b border-crust/10">
-            <div className="flex items-center justify-between mb-1">
+          <div key={slotIndex} className="border-b border-crust/10">
+            <div className="flex items-center justify-between px-5 py-3 bg-crust/[0.04]">
               <div>
                 <h3 className="font-semibold">
                   {slots > 1 ? `Escolha o sabor da ${ORDINALS[slotIndex] || slotIndex + 1}ª Pizza` : 'Escolha o sabor'}
@@ -104,16 +110,16 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
                 </p>
               </div>
               <span className="bg-crust/10 text-crust text-sm px-2 py-1 rounded-sm flex-shrink-0">
-                {slotTotals[slotIndex]}/{maxPerSlot}
+                {slotCounts[slotIndex]}/{maxPerSlot}
               </span>
             </div>
 
-            <div className="space-y-3 mt-3">
-              {flavors.map((flavor) => {
-                const qty = currentQty(slotIndex, flavor.id)
-                const remaining = slotRemaining(slotIndex)
+            <div className="px-5 divide-y divide-crust/5">
+              {filteredFlavors.map((flavor) => {
+                const selected = !!slot[flavor.id]
+                const full = slotCounts[slotIndex] >= maxPerSlot && !selected
                 return (
-                  <div key={flavor.id} className="flex gap-3 items-center">
+                  <div key={flavor.id} className="flex gap-3 items-center py-3">
                     {flavor.imageUrl && (
                       <img src={flavor.imageUrl} alt="" className="w-14 h-14 object-cover rounded-sm flex-shrink-0" />
                     )}
@@ -122,34 +128,20 @@ export default function FlavorPickerModal({ open, onClose, category, flavors, on
                       {flavor.description && <p className="text-xs text-crust/50">{flavor.description}</p>}
                       {!isCombo && <p className="text-xs text-crust/60 mt-0.5">{formatCurrency(flavor.price)}</p>}
                     </div>
-
-                    {maxPerSlot > 1 ? (
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          className="w-7 h-7 border border-crust/20 rounded-sm disabled:opacity-30"
-                          disabled={qty === 0}
-                          onClick={() => setQty(slotIndex, flavor.id, qty - 1)}
-                        >−</button>
-                        <span className="w-5 text-center text-sm">{qty}</span>
-                        <button
-                          className="w-7 h-7 border border-crust/20 rounded-sm disabled:opacity-30"
-                          disabled={remaining === 0}
-                          onClick={() => setQty(slotIndex, flavor.id, qty + 1)}
-                        >+</button>
-                      </div>
-                    ) : (
-                      <button
-                        className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border ${qty > 0 ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/40'}`}
-                        onClick={() => selectSingle(slotIndex, flavor.id)}
-                      >
-                        {qty > 0 ? '✓' : '+'}
-                      </button>
-                    )}
+                    <button
+                      disabled={full}
+                      className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${
+                        selected ? 'bg-tomato text-paper border-tomato' : full ? 'border-crust/10 text-crust/20' : 'border-crust/20 text-crust/40'
+                      }`}
+                      onClick={() => toggleFlavor(slotIndex, flavor.id)}
+                    >
+                      {selected ? '✓' : '+'}
+                    </button>
                   </div>
                 )
               })}
-              {flavors.length === 0 && (
-                <p className="text-sm text-crust/40">Nenhum sabor cadastrado nessa categoria ainda.</p>
+              {filteredFlavors.length === 0 && (
+                <p className="text-sm text-crust/40 py-3">Nenhum sabor encontrado.</p>
               )}
             </div>
           </div>
