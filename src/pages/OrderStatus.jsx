@@ -38,7 +38,10 @@ export default function OrderStatus() {
           <h2 className="font-semibold mb-3">Itens</h2>
           {order.items.map((item) => (
             <div key={item.id + item.notes} className="flex justify-between text-sm mb-1">
-              <span>{item.qty}x {item.name}</span>
+              <span>
+                {item.qty}x {item.name}
+                {item.notes && <span className="block text-xs text-crust/50">{item.notes}</span>}
+              </span>
               <span>{formatCurrency(item.price * item.qty)}</span>
             </div>
           ))}

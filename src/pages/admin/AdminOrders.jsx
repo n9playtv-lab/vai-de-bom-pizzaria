@@ -159,7 +159,10 @@ function OrderCard({ order, onUpdate, highlight }) {
       </div>
       <ul className="text-sm text-crust/80 mb-2">
         {order.items?.map((item) => (
-          <li key={item.id + item.notes}>{item.qty}x {item.name}</li>
+          <li key={item.id + item.notes} className="mb-1">
+            <span>{item.qty}x {item.name}</span>
+            {item.notes && <span className="block text-xs text-crust/50 pl-4">{item.notes}</span>}
+          </li>
         ))}
       </ul>
       <p className="text-sm mb-3">
