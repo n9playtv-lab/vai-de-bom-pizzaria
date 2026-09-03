@@ -194,12 +194,9 @@ function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
     <button
       onClick={onOpenPicker}
       disabled={!storeOpen}
-      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm overflow-hidden hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm p-4 flex gap-4 items-center hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {imageUrl && (
-        <img src={imageUrl} alt={category.name} className="w-full h-40 object-cover" />
-      )}
-      <div className="p-5">
+      <div className="flex-1 min-w-0">
         {isCombo ? (
           <>
             {category.comboDescription && <p className="text-crust/60 text-sm mb-2">{category.comboDescription}</p>}
@@ -215,6 +212,9 @@ function SpecialCategoryCard({ category, flavors, storeOpen, onOpenPicker }) {
         )}
         {!storeOpen && <p className="text-xs text-crust/40 mt-2">Pizzaria fechada no momento</p>}
       </div>
+      {imageUrl && (
+        <img src={imageUrl} alt={category.name} className="w-24 h-24 object-cover rounded-sm flex-shrink-0" />
+      )}
     </button>
   )
 }
