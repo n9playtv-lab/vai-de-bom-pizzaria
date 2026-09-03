@@ -150,12 +150,17 @@ function OrderCard({ order, onUpdate, highlight }) {
   const actions = NEXT_STATUS[order.status] || []
   return (
     <div className={`border rounded-sm p-4 ${highlight ? 'border-tomato bg-tomato/5' : 'border-crust/10'}`}>
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <p className="font-semibold">{order.customer?.name} — {order.customer?.phone}</p>
-          <p className="text-sm text-crust/60">{order.address?.street}, {order.address?.number} · {order.address?.neighborhood}</p>
+      <div className="flex justify-between items-start mb-3">
+        <div className="text-sm space-y-0.5">
+          <p><span className="text-crust/50">Nome:</span> <span className="font-semibold">{order.customer?.name}</span></p>
+          <p><span className="text-crust/50">Telefone:</span> {order.customer?.phone}</p>
+          <p><span className="text-crust/50">Rua:</span> {order.address?.street}</p>
+          <p><span className="text-crust/50">Número:</span> {order.address?.number}</p>
+          <p><span className="text-crust/50">Bairro:</span> {order.address?.neighborhood}</p>
+          {order.address?.complement && <p><span className="text-crust/50">Complemento:</span> {order.address.complement}</p>}
+          {order.address?.reference && <p><span className="text-crust/50">Referência:</span> {order.address.reference}</p>}
         </div>
-        <span className="text-sm font-semibold">{formatCurrency(order.subtotal)}</span>
+        <span className="text-sm font-semibold flex-shrink-0">{formatCurrency(order.subtotal)}</span>
       </div>
       <ul className="text-sm text-crust/80 mb-2">
         {order.items?.map((item) => (
