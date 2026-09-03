@@ -24,7 +24,7 @@ export default function Menu() {
   const sectionRefs = useRef({})
 
   useEffect(() => {
-    const q = query(collection(db, 'menu'), orderBy('category'), orderBy('order'))
+    const q = query(collection(db, 'menu'), orderBy('order'))
     const unsub = onSnapshot(q, (snap) => {
       setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
       setLoading(false)
