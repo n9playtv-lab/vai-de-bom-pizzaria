@@ -136,7 +136,7 @@ export default function Menu() {
         )}
 
         {Object.entries(byCategory).map(([categoryName, { category: catConfig, items: list }]) => {
-          const isSpecial = catConfig?.type === 'pizza' && (catConfig.pizzaCount > 1 || catConfig.allowHalfHalf)
+          const isSpecial = ['pizza', 'calzone'].includes(catConfig?.type) && (catConfig.pizzaCount > 1 || catConfig.allowHalfHalf)
 
           return (
             <section

@@ -7,7 +7,8 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import ImageUploadField from '../../components/ImageUploadField.jsx'
 
 const EMPTY_CATEGORY = { name: '', type: 'pizza', pizzaCount: 1, allowHalfHalf: false, comboPrice: '', comboDescription: '', imageUrl: '', order: 0 }
-const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', available: true, order: 0 }
+const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', type: 'pizza', available: true, order: 0 }
+const TYPE_LABELS = { pizza: 'Pizza', calzone: 'Calzone', bebida: 'Bebida' }
 
 export default function AdminMenuEditor() {
   const [categories, setCategories] = useState([])
@@ -37,12 +38,12 @@ export default function AdminMenuEditor() {
       type: catForm.type,
       order: Number(catForm.order) || 0,
       imageUrl: catForm.imageUrl || '',
-      pizzaCount: catForm.type === 'pizza' ? Math.max(1, Number(catForm.pizzaCount) || 1) : 1,
-      allowHalfHalf: catForm.type === 'pizza' ? !!catForm.allowHalfHalf : false,
+      pizzaCount: ['pizza', 'calzone'].includes(catForm.type) ? Math.max(1, Number(catForm.pizzaCount) || 1) : 1,
+      allowHalfHalf: ['pizza', 'calzone'].includes(catForm.type) ? !!catForm.allowHalfHalf : false,
       comboPrice: 0,
       comboDescription: '',
     }
-    if (catForm.type === 'pizza' && payload.pizzaCount > 1) {
+    if (['pizza', 'calzone'].includes(catForm.type) && payload.pizzaCount > 1) {
       payload.comboPrice = parseFloat(String(catForm.comboPrice).replace(',', '.')) || 0
       payload.comboDescription = catForm.comboDescription || ''
     }
@@ -77,13 +78,16 @@ export default function AdminMenuEditor() {
       description: itemForm.description,
       price: parseFloat(String(itemForm.price).replace(',', '.')) || 0,
       imageUrl: itemForm.imageUrl,
+      type: itemForm.type,
       available: itemForm.available !== false,
       order: Number(itemForm.order) || 0,
     }
     if (editingItemId) {
       await updateDoc(doc(db, 'menu', editingItemId), payload)
     } else {
-      await addDoc(collection(db, 'menu'), { ...payload, categoryIds: [] })
+      // vincula automaticamente a todas as categorias do tipo escolhido
+      const categoryIds = categories.filter((c) => c.type === itemForm.type).map((c) => c.id)
+      await addDoc(collection(db, 'menu'), { ...payload, categoryIds })
     }
     setItemForm(EMPTY_ITEM)
     setEditingItemId(null)
@@ -141,7 +145,7 @@ export default function AdminMenuEditor() {
           <div>
             <label className="text-sm text-crust/70 block mb-1">Tipo</label>
             <div className="flex gap-2">
-              {[['pizza', 'Pizza'], ['bebida', 'Bebida']].map(([value, label]) => (
+              {[['pizza', 'Pizza'], ['calzone', 'Calzone'], ['bebida', 'Bebida']].map(([value, label]) => (
                 <label key={value} className={`flex-1 text-center border rounded-sm px-3 py-2 cursor-pointer text-sm ${catForm.type === value ? 'border-tomato bg-tomato/5' : 'border-crust/20'}`}>
                   <input type="radio" className="hidden" checked={catForm.type === value}
                     onChange={() => setCatForm({ ...catForm, type: value })} />
@@ -151,17 +155,21 @@ export default function AdminMenuEditor() {
             </div>
           </div>
 
-          {catForm.type === 'pizza' && (
+          {['pizza', 'calzone'].includes(catForm.type) && (
             <>
               <div>
-                <label className="text-sm text-crust/70 block mb-1">Quantas pizzas por pedido nessa categoria?</label>
+                <label className="text-sm text-crust/70 block mb-1">
+                  Quantos {catForm.type === 'calzone' ? 'calzones' : 'pizzas'} por pedido nessa categoria?
+                </label>
                 <input type="number" min="1" className="input-field" value={catForm.pizzaCount}
                   onChange={(e) => setCatForm({ ...catForm, pizzaCount: e.target.value })} />
                 <p className="text-xs text-crust/40 mt-1">Ex: categoria normal = 1. "Clone de pizza" (duas pizzas por pedido) = 2.</p>
               </div>
 
               <div>
-                <label className="text-sm text-crust/70 block mb-1">Permitir pizza meio a meio (até 2 sabores por pizza)?</label>
+                <label className="text-sm text-crust/70 block mb-1">
+                  Permitir {catForm.type === 'calzone' ? 'calzone' : 'pizza'} meio a meio (até 2 sabores)?
+                </label>
                 <div className="flex gap-2">
                   {[[true, 'Sim'], [false, 'Não']].map(([value, label]) => (
                     <label key={label} className={`flex-1 text-center border rounded-sm px-3 py-2 cursor-pointer text-sm ${catForm.allowHalfHalf === value ? 'border-tomato bg-tomato/5' : 'border-crust/20'}`}>
@@ -175,7 +183,7 @@ export default function AdminMenuEditor() {
 
               {Number(catForm.pizzaCount) > 1 && (
                 <div className="border-t border-crust/10 pt-3 space-y-3">
-                  <p className="text-sm text-crust/60">Como são {catForm.pizzaCount} pizzas por pedido, essa categoria aparece no cardápio como um combo com preço fixo (o cliente só escolhe os sabores).</p>
+                  <p className="text-sm text-crust/60">Como são {catForm.pizzaCount} por pedido, essa categoria aparece no cardápio como um combo com preço fixo (o cliente só escolhe os sabores).</p>
                   <input className="input-field" placeholder="Preço do combo (ex: 59,90)" value={catForm.comboPrice}
                     onChange={(e) => setCatForm({ ...catForm, comboPrice: e.target.value })} required />
                   <input className="input-field" placeholder="Descrição do combo (ex: Escolha duas pizzas por 59,90)" value={catForm.comboDescription}
@@ -201,7 +209,7 @@ export default function AdminMenuEditor() {
               <div key={cat.id} className="flex items-center justify-between border border-crust/10 rounded-sm px-4 py-3 text-sm">
                 <div>
                   <span className="font-medium">{cat.name}</span>
-                  <span className="text-crust/40"> · {cat.type === 'pizza' ? `Pizza · ${cat.pizzaCount}x` : 'Bebida'}{cat.allowHalfHalf ? ' · meio a meio' : ''}</span>
+                  <span className="text-crust/40"> · {['pizza', 'calzone'].includes(cat.type) ? `${TYPE_LABELS[cat.type]} · ${cat.pizzaCount}x` : 'Bebida'}{cat.allowHalfHalf ? ' · meio a meio' : ''}</span>
                 </div>
                 <div className="flex gap-3">
                   <button className="text-crust/60 hover:text-crust" onClick={() => startEditCat(cat)}>Editar</button>
@@ -215,7 +223,7 @@ export default function AdminMenuEditor() {
         {/* CRIAR / EDITAR SABOR (biblioteca reutilizavel) */}
         <form onSubmit={handleItemSubmit} className="border border-crust/10 rounded-sm p-5 mb-8 space-y-3">
           <h2 className="text-xl mb-2">2. {editingItemId ? 'Editar sabor' : 'Criar sabor / item'}</h2>
-          <p className="text-sm text-crust/50 -mt-2">Cada sabor é criado uma única vez. Depois é só marcar em quais categorias ele aparece, na lista abaixo.</p>
+          <p className="text-sm text-crust/50 -mt-2">Cada sabor é criado uma única vez. Ele já entra automaticamente em todas as categorias do tipo escolhido.</p>
 
           <input className="input-field" placeholder="Nome (ex: Pizza de Mussarela)" value={itemForm.name}
             onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} required />
@@ -229,6 +237,24 @@ export default function AdminMenuEditor() {
             onChange={(url) => setItemForm({ ...itemForm, imageUrl: url })}
             folder="menu"
           />
+
+          <div>
+            <label className="text-sm text-crust/70 block mb-1">Qual categoria se encaixa?</label>
+            <div className="flex gap-2">
+              {[['pizza', 'Pizza'], ['calzone', 'Calzone'], ['bebida', 'Bebida']].map(([value, label]) => (
+                <label key={value} className={`flex-1 text-center border rounded-sm px-3 py-2 cursor-pointer text-sm ${itemForm.type === value ? 'border-tomato bg-tomato/5' : 'border-crust/20'}`}>
+                  <input type="radio" className="hidden" checked={itemForm.type === value}
+                    onChange={() => setItemForm({ ...itemForm, type: value })} />
+                  {label}
+                </label>
+              ))}
+            </div>
+            {!editingItemId && (
+              <p className="text-xs text-crust/40 mt-1">
+                Vai entrar em: {categories.filter((c) => c.type === itemForm.type).map((c) => c.name).join(', ') || 'nenhuma categoria desse tipo ainda'}
+              </p>
+            )}
+          </div>
 
           <div className="flex gap-3">
             <button type="submit" className="btn-primary">{editingItemId ? 'Salvar alterações' : 'Criar sabor'}</button>
@@ -250,7 +276,7 @@ export default function AdminMenuEditor() {
             <div key={p.id} className="border border-crust/10 rounded-sm px-4 py-3">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <p className="font-medium">{p.name}</p>
+                  <p className="font-medium">{p.name} {p.type && <span className="text-crust/40 text-xs font-normal">· {TYPE_LABELS[p.type]}</span>}</p>
                   <p className="text-sm text-crust/60">{formatCurrency(p.price)}</p>
                 </div>
                 <div className="flex gap-2 text-sm flex-shrink-0">
