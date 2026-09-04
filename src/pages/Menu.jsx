@@ -230,31 +230,27 @@ function MenuItem({ product, onAdd, storeOpen }) {
   }
 
   return (
-    <div className="flex gap-4">
+    <button
+      onClick={handleAdd}
+      disabled={!storeOpen}
+      className="w-full text-left bg-paper shadow-[0_2px_10px_rgba(43,27,18,0.1)] rounded-sm p-4 flex gap-4 items-center hover:shadow-[0_2px_14px_rgba(43,27,18,0.16)] transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold">{product.name}</p>
+        {product.description && (
+          <p className="text-sm text-crust/60 mt-1">{product.description}</p>
+        )}
+        <p className={`text-lg font-semibold mt-1 ${added ? 'text-basil' : 'text-tomato'}`}>
+          {added ? 'Adicionado ✓' : formatCurrency(product.price)}
+        </p>
+      </div>
       {product.imageUrl && (
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="w-20 h-20 object-cover rounded-sm flex-shrink-0"
+          className="w-24 h-24 object-cover rounded-sm flex-shrink-0"
         />
       )}
-      <div className="flex-1">
-        <div className="menu-row">
-          <span className="font-medium">{product.name}</span>
-          <span className="dots" />
-          <span>{formatCurrency(product.price)}</span>
-        </div>
-        {product.description && (
-          <p className="text-sm text-crust/60 mt-1">{product.description}</p>
-        )}
-        <button
-          onClick={handleAdd}
-          disabled={!storeOpen}
-          className="mt-2 text-sm font-medium text-tomato hover:text-tomatodark disabled:text-crust/30 disabled:cursor-not-allowed"
-        >
-          {!storeOpen ? 'Pizzaria fechada' : added ? 'Adicionado ✓' : '+ Adicionar'}
-        </button>
-      </div>
-    </div>
+    </button>
   )
 }
