@@ -7,7 +7,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import ImageUploadField from '../../components/ImageUploadField.jsx'
 
 const EMPTY_CATEGORY = { name: '', type: 'pizza', pizzaCount: 1, allowHalfHalf: false, comboPrice: '', comboDescription: '', imageUrl: '', order: 0 }
-const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', type: 'pizza', available: true, order: 0 }
+const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', type: 'pizza', cold: false, available: true, order: 0 }
 const TYPE_LABELS = { pizza: 'Pizza', calzone: 'Calzone', bebida: 'Bebida' }
 
 export default function AdminMenuEditor() {
@@ -79,6 +79,7 @@ export default function AdminMenuEditor() {
       price: parseFloat(String(itemForm.price).replace(',', '.')) || 0,
       imageUrl: itemForm.imageUrl,
       type: itemForm.type,
+      cold: itemForm.type === 'bebida' ? !!itemForm.cold : false,
       available: itemForm.available !== false,
       order: Number(itemForm.order) || 0,
     }
@@ -255,6 +256,14 @@ export default function AdminMenuEditor() {
               </p>
             )}
           </div>
+
+          {itemForm.type === 'bebida' && (
+            <label className="flex items-center gap-2 text-sm text-crust/70">
+              <input type="checkbox" checked={!!itemForm.cold}
+                onChange={(e) => setItemForm({ ...itemForm, cold: e.target.checked })} />
+              ❄️ Bebida gelada
+            </label>
+          )}
 
           <div className="flex gap-3">
             <button type="submit" className="btn-primary">{editingItemId ? 'Salvar alterações' : 'Criar sabor'}</button>

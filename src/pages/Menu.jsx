@@ -240,6 +240,11 @@ function MenuItem({ product, onAdd, storeOpen }) {
         {product.description && (
           <p className="text-sm text-crust/60 mt-1">{product.description}</p>
         )}
+        {product.cold && (
+          <span className="inline-flex items-center gap-1 text-xs text-sky-600 mt-1">
+            ❄️ Bebida gelada
+          </span>
+        )}
         <p className={`text-lg font-semibold mt-1 ${added ? 'text-basil' : 'text-tomato'}`}>
           {added ? 'Adicionado ✓' : formatCurrency(product.price)}
         </p>
