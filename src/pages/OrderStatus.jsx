@@ -30,7 +30,7 @@ export default function OrderStatus() {
   return (
     <div className="min-h-screen bg-paper">
       <div className="max-w-lg mx-auto px-4 py-10">
-        <p className="text-sm text-crust/50 mb-1">Pedido #{order.id.slice(0, 6).toUpperCase()}</p>
+        <p className="text-sm text-crust/50 mb-1">Pedido #{order.orderNumber || order.id.slice(0, 6).toUpperCase()}</p>
         <h1 className={`text-3xl mb-2 ${info.color}`}>{info.label}</h1>
         <p className="text-crust/70 mb-8">{info.desc}</p>
 

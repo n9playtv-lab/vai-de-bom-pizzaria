@@ -26,6 +26,12 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Contador sequencial do numero do pedido (001, 002, 003...)
+    match /counters/{counterId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Pedidos: qualquer cliente pode criar um pedido novo (checkout publico),
     // mas so admin autenticado pode ler a lista e mudar o status.
     // O cliente consegue ler APENAS o pedido especifico dele (ele ja tem o ID pela URL).

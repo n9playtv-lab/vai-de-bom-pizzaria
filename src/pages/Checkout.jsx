@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore'
-import { useEffect } from 'react'
+import { collection, addDoc, serverTimestamp, doc, onSnapshot, runTransaction } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { getStoreStatus } from '../utils/storeHours.js'
 
 const STEPS = ['Revisão', 'Entrega', 'Pagamento']
+
+async function getNextOrderNumber() {
+  const counterRef = doc(db, 'counters', 'orders')
+  const next = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(counterRef)
+    const current = snap.exists() ? snap.data().current || 0 : 0
+    const value = current + 1
+    transaction.set(counterRef, { current: value }, { merge: true })
+    return value
+  })
+  return String(next).padStart(3, '0')
+}
 
 export default function Checkout() {
   const [step, setStep] = useState(0)
@@ -38,7 +49,10 @@ export default function Checkout() {
         : null
       const troco = changeForValue ? Math.max(changeForValue - subtotal, 0) : null
 
+      const orderNumber = await getNextOrderNumber()
+
       const orderRef = await addDoc(collection(db, 'orders'), {
+        orderNumber,
         items,
         subtotal,
         customer,

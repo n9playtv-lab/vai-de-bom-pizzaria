@@ -21,10 +21,14 @@ const WHATSAPP_TOKEN = defineString('WHATSAPP_TOKEN')
 const WHATSAPP_PHONE_ID = defineString('WHATSAPP_PHONE_ID')
 
 const MESSAGES = {
-  aceito: (order) => `Boa, ${order.customer.name}! Seu pedido #${order.id.slice(0, 6).toUpperCase()} foi aceito e já está sendo preparado. 🍕`,
-  recusado: (order) => `Poxa, ${order.customer.name}, não conseguimos aceitar seu pedido #${order.id.slice(0, 6).toUpperCase()} agora. Fale com a gente pra entender o motivo.`,
-  saiu_entrega: (order) => `Seu pedido #${order.id.slice(0, 6).toUpperCase()} saiu para entrega! Chega logo aí. 🛵`,
-  entregue: (order) => `Pedido #${order.id.slice(0, 6).toUpperCase()} entregue. Bom apetite! Obrigado por pedir com a gente 🍕`,
+  aceito: (order) => `Boa, ${order.customer.name}! Seu pedido #${orderLabel(order)} foi aceito e já está sendo preparado. 🍕`,
+  recusado: (order) => `Poxa, ${order.customer.name}, não conseguimos aceitar seu pedido #${orderLabel(order)} agora. Fale com a gente pra entender o motivo.`,
+  saiu_entrega: (order) => `Seu pedido #${orderLabel(order)} saiu para entrega! Chega logo aí. 🛵`,
+  entregue: (order) => `Pedido #${orderLabel(order)} entregue. Bom apetite! Obrigado por pedir com a gente 🍕`,
+}
+
+function orderLabel(order) {
+  return order.orderNumber || order.id.slice(0, 6).toUpperCase()
 }
 
 export const onOrderStatusChange = onDocumentUpdated('orders/{orderId}', async (event) => {
