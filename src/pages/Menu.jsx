@@ -240,7 +240,7 @@ function MenuItem({ product, onAdd, storeOpen }) {
         {product.description && (
           <p className="text-sm text-crust/60 mt-1">{product.description}</p>
         )}
-        {product.cold && (
+        {product.type === 'bebida' && (
           <span className="inline-flex items-center gap-1 text-xs text-sky-600 mt-1">
             ❄️ Bebida gelada
           </span>

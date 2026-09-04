@@ -79,7 +79,7 @@ export default function AdminMenuEditor() {
       price: parseFloat(String(itemForm.price).replace(',', '.')) || 0,
       imageUrl: itemForm.imageUrl,
       type: itemForm.type,
-      cold: itemForm.type === 'bebida' ? !!itemForm.cold : false,
+      cold: itemForm.type === 'bebida',
       available: itemForm.available !== false,
       order: Number(itemForm.order) || 0,
     }
@@ -257,13 +257,7 @@ export default function AdminMenuEditor() {
             )}
           </div>
 
-          {itemForm.type === 'bebida' && (
-            <label className="flex items-center gap-2 text-sm text-crust/70">
-              <input type="checkbox" checked={!!itemForm.cold}
-                onChange={(e) => setItemForm({ ...itemForm, cold: e.target.checked })} />
-              ❄️ Bebida gelada
-            </label>
-          )}
+
 
           <div className="flex gap-3">
             <button type="submit" className="btn-primary">{editingItemId ? 'Salvar alterações' : 'Criar sabor'}</button>
