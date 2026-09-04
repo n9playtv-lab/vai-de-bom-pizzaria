@@ -17,6 +17,7 @@ export default function AdminMenuEditor() {
   const [editingCatId, setEditingCatId] = useState(null)
   const [itemForm, setItemForm] = useState(EMPTY_ITEM)
   const [editingItemId, setEditingItemId] = useState(null)
+  const [expandedType, setExpandedType] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'categories'), orderBy('order'))
@@ -68,6 +69,15 @@ export default function AdminMenuEditor() {
       return
     }
     if (confirm(`Remover a categoria "${cat.name}"?`)) await deleteDoc(doc(db, 'categories', cat.id))
+  }
+
+  async function moveCategory(index, direction) {
+    const target = index + direction
+    if (target < 0 || target >= categories.length) return
+    const reordered = [...categories]
+    const [moved] = reordered.splice(index, 1)
+    reordered.splice(target, 0, moved)
+    await Promise.all(reordered.map((cat, i) => updateDoc(doc(db, 'categories', cat.id), { order: i })))
   }
 
   // ---------- Itens / sabores (biblioteca reutilizavel) ----------
@@ -206,13 +216,29 @@ export default function AdminMenuEditor() {
 
         {categories.length > 0 && (
           <div className="mb-8 space-y-2">
-            {categories.map((cat) => (
+            {categories.map((cat, index) => (
               <div key={cat.id} className="flex items-center justify-between border border-crust/10 rounded-sm px-4 py-3 text-sm">
-                <div>
-                  <span className="font-medium">{cat.name}</span>
-                  <span className="text-crust/40"> · {['pizza', 'calzone'].includes(cat.type) ? `${TYPE_LABELS[cat.type]} · ${cat.pizzaCount}x` : 'Bebida'}{cat.allowHalfHalf ? ' · meio a meio' : ''}</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button
+                      disabled={index === 0}
+                      onClick={() => moveCategory(index, -1)}
+                      className="w-6 h-6 flex items-center justify-center text-crust/50 disabled:opacity-20"
+                      aria-label="Mover para cima"
+                    >▲</button>
+                    <button
+                      disabled={index === categories.length - 1}
+                      onClick={() => moveCategory(index, 1)}
+                      className="w-6 h-6 flex items-center justify-center text-crust/50 disabled:opacity-20"
+                      aria-label="Mover para baixo"
+                    >▼</button>
+                  </div>
+                  <div>
+                    <span className="font-medium">{cat.name}</span>
+                    <span className="text-crust/40"> · {['pizza', 'calzone'].includes(cat.type) ? `${TYPE_LABELS[cat.type]} · ${cat.pizzaCount}x` : 'Bebida'}{cat.allowHalfHalf ? ' · meio a meio' : ''}</span>
+                  </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-shrink-0">
                   <button className="text-crust/60 hover:text-crust" onClick={() => startEditCat(cat)}>Editar</button>
                   <button className="text-tomato" onClick={() => removeCat(cat)}>Excluir</button>
                 </div>
@@ -269,45 +295,66 @@ export default function AdminMenuEditor() {
           </div>
         </form>
 
-        {/* LISTA DE SABORES + VINCULO COM CATEGORIAS */}
+        {/* LISTA DE SABORES + VINCULO COM CATEGORIAS, agrupados por tipo */}
         <h2 className="text-xl mb-3">3. Sabores cadastrados</h2>
         {categories.length === 0 && (
           <p className="text-sm text-crust/50 mb-3">Crie uma categoria acima antes de vincular os sabores.</p>
         )}
         <div className="space-y-3">
-          {products.map((p) => (
-            <div key={p.id} className="border border-crust/10 rounded-sm px-4 py-3">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="font-medium">{p.name} {p.type && <span className="text-crust/40 text-xs font-normal">· {TYPE_LABELS[p.type]}</span>}</p>
-                  <p className="text-sm text-crust/60">{formatCurrency(p.price)}</p>
-                </div>
-                <div className="flex gap-2 text-sm flex-shrink-0">
-                  <button className="text-crust/60 hover:text-crust" onClick={() => toggleAvailable(p)}>
-                    {p.available !== false ? 'Pausar' : 'Reativar'}
-                  </button>
-                  <button className="text-crust/60 hover:text-crust" onClick={() => startEditItem(p)}>Editar</button>
-                  <button className="text-tomato" onClick={() => removeItem(p.id)}>Excluir</button>
-                </div>
+          {Object.entries(TYPE_LABELS).map(([type, label]) => {
+            const items = products.filter((p) => p.type === type)
+            if (items.length === 0) return null
+            const open = expandedType === type
+            return (
+              <div key={type} className="border border-crust/10 rounded-sm overflow-hidden">
+                <button
+                  onClick={() => setExpandedType(open ? null : type)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-crust/5"
+                >
+                  <span className="font-semibold">{label} <span className="text-crust/40 font-normal">({items.length})</span></span>
+                  <span className="text-crust/40 text-xs">{open ? '▲' : '▼'}</span>
+                </button>
+
+                {open && (
+                  <div className="divide-y divide-crust/10">
+                    {items.map((p) => (
+                      <div key={p.id} className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-medium">{p.name}</p>
+                            <p className="text-sm text-crust/60">{formatCurrency(p.price)}</p>
+                          </div>
+                          <div className="flex gap-2 text-sm flex-shrink-0">
+                            <button className="text-crust/60 hover:text-crust" onClick={() => toggleAvailable(p)}>
+                              {p.available !== false ? 'Pausar' : 'Reativar'}
+                            </button>
+                            <button className="text-crust/60 hover:text-crust" onClick={() => startEditItem(p)}>Editar</button>
+                            <button className="text-tomato" onClick={() => removeItem(p.id)}>Excluir</button>
+                          </div>
+                        </div>
+                        {categories.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {categories.map((cat) => {
+                              const active = (p.categoryIds || []).includes(cat.id)
+                              return (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => toggleCategoryForItem(p, cat.id)}
+                                  className={`text-xs px-3 py-1.5 rounded-full border ${active ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/50'}`}
+                                >
+                                  {active ? '✓ ' : '+ '}{cat.name}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {categories.map((cat) => {
-                    const active = (p.categoryIds || []).includes(cat.id)
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => toggleCategoryForItem(p, cat.id)}
-                        className={`text-xs px-3 py-1.5 rounded-full border ${active ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/50'}`}
-                      >
-                        {active ? '✓ ' : '+ '}{cat.name}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
           {products.length === 0 && <p className="text-sm text-crust/40">Nenhum sabor criado ainda.</p>}
         </div>
       </main>
