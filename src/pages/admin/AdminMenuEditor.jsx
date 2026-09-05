@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { Link } from 'react-router-dom'
 import { db, auth } from '../../firebase.js'
@@ -115,13 +115,6 @@ export default function AdminMenuEditor() {
 
   async function removeItem(id) {
     if (confirm('Remover este sabor/item da biblioteca?')) await deleteDoc(doc(db, 'menu', id))
-  }
-
-  async function toggleCategoryForItem(product, catId) {
-    const has = (product.categoryIds || []).includes(catId)
-    await updateDoc(doc(db, 'menu', product.id), {
-      categoryIds: has ? arrayRemove(catId) : arrayUnion(catId),
-    })
   }
 
   return (
@@ -332,22 +325,6 @@ export default function AdminMenuEditor() {
                             <button className="text-tomato" onClick={() => removeItem(p.id)}>Excluir</button>
                           </div>
                         </div>
-                        {categories.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {categories.map((cat) => {
-                              const active = (p.categoryIds || []).includes(cat.id)
-                              return (
-                                <button
-                                  key={cat.id}
-                                  onClick={() => toggleCategoryForItem(p, cat.id)}
-                                  className={`text-xs px-3 py-1.5 rounded-full border ${active ? 'bg-tomato text-paper border-tomato' : 'border-crust/20 text-crust/50'}`}
-                                >
-                                  {active ? '✓ ' : '+ '}{cat.name}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
