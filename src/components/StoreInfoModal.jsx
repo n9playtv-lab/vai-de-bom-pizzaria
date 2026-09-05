@@ -14,7 +14,7 @@ export default function StoreInfoModal({ open, onClose, settings }) {
   const instagram = settings?.instagram || ''
   const address = settings?.address || ''
   const pixKey = settings?.pixKey || ''
-  const deliveryAreas = Array.isArray(settings?.deliveryAreas) ? settings.deliveryAreas : []
+  const deliveryCities = Array.isArray(settings?.deliveryCities) ? settings.deliveryCities : []
   const freeDeliveryEnabled = !!settings?.freeDeliveryEnabled
 
   return (
@@ -40,7 +40,7 @@ export default function StoreInfoModal({ open, onClose, settings }) {
         {tab === 'Sobre' && <SobreTab logoUrl={logoUrl} phone={phone} instagram={instagram} address={address} />}
         {tab === 'Horário' && <HorarioTab hours={settings?.hours} />}
         {tab === 'Pagamento' && <PagamentoTab pixKey={pixKey} />}
-        {tab === 'Entrega' && <EntregaTab areas={deliveryAreas} freeDeliveryEnabled={freeDeliveryEnabled} />}
+        {tab === 'Entrega' && <EntregaTab cities={deliveryCities} freeDeliveryEnabled={freeDeliveryEnabled} />}
       </div>
     </div>
   )
@@ -136,29 +136,29 @@ function PagamentoTab({ pixKey }) {
   )
 }
 
-function EntregaTab({ areas, freeDeliveryEnabled }) {
+function EntregaTab({ cities, freeDeliveryEnabled }) {
   const [search, setSearch] = useState('')
-  const filtered = areas.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
+  const filtered = cities.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div>
-      <h3 className="font-semibold mb-3">🗺️ Áreas onde entregamos</h3>
+      <h3 className="font-semibold mb-3">🗺️ Cidades onde entregamos</h3>
       {freeDeliveryEnabled && (
-        <p className="text-sm text-basil mb-3">🎉 Frete grátis para todos os bairros no momento!</p>
+        <p className="text-sm text-basil mb-3">🎉 Frete grátis para todas as cidades no momento!</p>
       )}
       <input
         className="input-field mb-4"
-        placeholder="Buscar bairro"
+        placeholder="Buscar cidade"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      {areas.length === 0 && <p className="text-sm text-crust/50">Nenhum bairro cadastrado ainda.</p>}
+      {cities.length === 0 && <p className="text-sm text-crust/50">Nenhuma cidade cadastrada ainda.</p>}
       <div className="space-y-2">
-        {filtered.map((area) => (
-          <div key={area.name} className="flex justify-between items-center bg-crust/5 rounded-sm px-4 py-2.5 text-sm">
-            <span>{area.name}</span>
-            <span className={freeDeliveryEnabled || !area.fee ? 'text-basil font-medium' : 'text-crust/70'}>
-              {freeDeliveryEnabled || !area.fee ? 'Grátis' : formatCurrency(area.fee)}
+        {filtered.map((city) => (
+          <div key={city.name} className="flex justify-between items-center bg-crust/5 rounded-sm px-4 py-2.5 text-sm">
+            <span>{city.name}</span>
+            <span className={freeDeliveryEnabled || !city.fee ? 'text-basil font-medium' : 'text-crust/70'}>
+              {freeDeliveryEnabled || !city.fee ? 'Grátis' : formatCurrency(city.fee)}
             </span>
           </div>
         ))}

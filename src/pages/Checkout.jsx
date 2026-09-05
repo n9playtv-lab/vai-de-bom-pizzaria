@@ -5,7 +5,7 @@ import { db } from '../firebase.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { getStoreStatus } from '../utils/storeHours.js'
-import { getDeliveryFee } from '../utils/deliveryFee.js'
+import { getDeliveryFee, lookupCep } from '../utils/deliveryFee.js'
 
 const STEPS = ['Revisão', 'Entrega', 'Pagamento']
 
@@ -40,7 +40,7 @@ export default function Checkout() {
     return unsub
   }, [])
 
-  const deliveryFee = getDeliveryFee(settings, address.neighborhood)
+  const deliveryFee = getDeliveryFee(settings, address.city)
   const total = subtotal + deliveryFee
 
   async function handleConfirm() {
@@ -148,7 +148,35 @@ function StepReview({ cart, onNext }) {
 }
 
 function StepAddress({ customer, setCustomer, address, setAddress, deliveryFee, onBack, onNext }) {
+  const [cepStatus, setCepStatus] = useState('idle') // idle | loading | found | not_found
   const valid = customer.name && customer.phone && address.street && address.number && address.neighborhood
+
+  useEffect(() => {
+    const digits = (address.cep || '').replace(/\D/g, '')
+    if (digits.length !== 8) {
+      setCepStatus('idle')
+      return
+    }
+    let cancelled = false
+    setCepStatus('loading')
+    const timer = setTimeout(async () => {
+      const result = await lookupCep(digits)
+      if (cancelled) return
+      if (!result) {
+        setCepStatus('not_found')
+        return
+      }
+      setCepStatus('found')
+      setAddress((prev) => ({
+        ...prev,
+        street: prev.street || result.street,
+        neighborhood: prev.neighborhood || result.neighborhood,
+        city: result.city,
+      }))
+    }, 500)
+    return () => { cancelled = true; clearTimeout(timer) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address.cep])
 
   return (
     <div>
@@ -158,6 +186,19 @@ function StepAddress({ customer, setCustomer, address, setAddress, deliveryFee, 
           value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} />
         <input className="input-field" placeholder="WhatsApp (DDD + número)"
           value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} />
+
+        <div>
+          <input className="input-field" placeholder="CEP" inputMode="numeric" maxLength={9}
+            value={address.cep} onChange={(e) => setAddress({ ...address, cep: e.target.value })} />
+          {cepStatus === 'loading' && <p className="text-xs text-crust/50 mt-1">Buscando endereço...</p>}
+          {cepStatus === 'found' && address.city && (
+            <p className="text-xs text-basil mt-1">Cidade: {address.city}</p>
+          )}
+          {cepStatus === 'not_found' && (
+            <p className="text-xs text-tomato mt-1">CEP não encontrado, preencha o endereço manualmente.</p>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <input className="input-field flex-1" placeholder="Rua"
             value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} />
@@ -167,9 +208,9 @@ function StepAddress({ customer, setCustomer, address, setAddress, deliveryFee, 
         <div>
           <input className="input-field" placeholder="Bairro"
             value={address.neighborhood} onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })} />
-          {address.neighborhood && (
+          {address.city && (
             <p className="text-xs text-crust/50 mt-1">
-              {deliveryFee > 0 ? `Taxa de entrega para esse bairro: ${formatCurrency(deliveryFee)}` : 'Entrega grátis para esse bairro 🎉'}
+              {deliveryFee > 0 ? `Taxa de entrega para ${address.city}: ${formatCurrency(deliveryFee)}` : `Entrega grátis para ${address.city} 🎉`}
             </p>
           )}
         </div>

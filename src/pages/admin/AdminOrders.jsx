@@ -159,6 +159,8 @@ function OrderCard({ order, onUpdate, highlight }) {
           <p><span className="text-crust/50">Rua:</span> {order.address?.street}</p>
           <p><span className="text-crust/50">Número:</span> {order.address?.number}</p>
           <p><span className="text-crust/50">Bairro:</span> {order.address?.neighborhood}</p>
+          {order.address?.city && <p><span className="text-crust/50">Cidade:</span> {order.address.city}</p>}
+          {order.address?.cep && <p><span className="text-crust/50">CEP:</span> {order.address.cep}</p>}
           {order.address?.complement && <p><span className="text-crust/50">Complemento:</span> {order.address.complement}</p>}
           {order.address?.reference && <p><span className="text-crust/50">Referência:</span> {order.address.reference}</p>}
         </div>

@@ -6,7 +6,7 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState([]) // {id, name, price, qty, notes}
   const [customer, setCustomer] = useState({ name: '', phone: '' })
   const [address, setAddress] = useState({
-    street: '', number: '', neighborhood: '', complement: '', reference: '',
+    cep: '', city: '', street: '', number: '', neighborhood: '', complement: '', reference: '',
   })
   const [payment, setPayment] = useState({ method: '', changeFor: '' })
 
