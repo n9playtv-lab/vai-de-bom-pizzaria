@@ -5,6 +5,7 @@ import { db } from '../firebase.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { getStoreStatus } from '../utils/storeHours.js'
+import { getDeliveryFee } from '../utils/deliveryFee.js'
 
 const STEPS = ['Revisão', 'Entrega', 'Pagamento']
 
@@ -25,16 +26,22 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [storeOpen, setStoreOpen] = useState(true)
+  const [settings, setSettings] = useState(null)
   const navigate = useNavigate()
   const cart = useCart()
   const { items, subtotal, customer, setCustomer, address, setAddress, payment, setPayment, clearCart } = cart
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
-      setStoreOpen(getStoreStatus(snap.exists() ? snap.data() : null).open)
+      const data = snap.exists() ? snap.data() : null
+      setSettings(data)
+      setStoreOpen(getStoreStatus(data).open)
     })
     return unsub
   }, [])
+
+  const deliveryFee = getDeliveryFee(settings, address.neighborhood)
+  const total = subtotal + deliveryFee
 
   async function handleConfirm() {
     if (!storeOpen) {
@@ -47,7 +54,7 @@ export default function Checkout() {
       const changeForValue = payment.method === 'dinheiro' && payment.changeFor
         ? parseFloat(payment.changeFor.replace(',', '.'))
         : null
-      const troco = changeForValue ? Math.max(changeForValue - subtotal, 0) : null
+      const troco = changeForValue ? Math.max(changeForValue - total, 0) : null
 
       const orderNumber = await getNextOrderNumber()
 
@@ -55,6 +62,8 @@ export default function Checkout() {
         orderNumber,
         items,
         subtotal,
+        deliveryFee,
+        total,
         customer,
         address,
         payment: { ...payment, changeForValue, troco },
@@ -91,12 +100,13 @@ export default function Checkout() {
           <StepAddress
             customer={customer} setCustomer={setCustomer}
             address={address} setAddress={setAddress}
+            deliveryFee={deliveryFee}
             onBack={() => setStep(0)} onNext={() => setStep(2)}
           />
         )}
         {step === 2 && (
           <StepPayment
-            payment={payment} setPayment={setPayment} subtotal={subtotal}
+            payment={payment} setPayment={setPayment} subtotal={subtotal} deliveryFee={deliveryFee} total={total}
             onBack={() => setStep(1)} onConfirm={handleConfirm}
             submitting={submitting} error={error} storeOpen={storeOpen}
           />
@@ -137,7 +147,7 @@ function StepReview({ cart, onNext }) {
   )
 }
 
-function StepAddress({ customer, setCustomer, address, setAddress, onBack, onNext }) {
+function StepAddress({ customer, setCustomer, address, setAddress, deliveryFee, onBack, onNext }) {
   const valid = customer.name && customer.phone && address.street && address.number && address.neighborhood
 
   return (
@@ -154,8 +164,15 @@ function StepAddress({ customer, setCustomer, address, setAddress, onBack, onNex
           <input className="input-field w-24" placeholder="Nº"
             value={address.number} onChange={(e) => setAddress({ ...address, number: e.target.value })} />
         </div>
-        <input className="input-field" placeholder="Bairro"
-          value={address.neighborhood} onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })} />
+        <div>
+          <input className="input-field" placeholder="Bairro"
+            value={address.neighborhood} onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })} />
+          {address.neighborhood && (
+            <p className="text-xs text-crust/50 mt-1">
+              {deliveryFee > 0 ? `Taxa de entrega para esse bairro: ${formatCurrency(deliveryFee)}` : 'Entrega grátis para esse bairro 🎉'}
+            </p>
+          )}
+        </div>
         <input className="input-field" placeholder="Complemento (opcional)"
           value={address.complement} onChange={(e) => setAddress({ ...address, complement: e.target.value })} />
         <input className="input-field" placeholder="Ponto de referência (opcional)"
@@ -169,9 +186,9 @@ function StepAddress({ customer, setCustomer, address, setAddress, onBack, onNex
   )
 }
 
-function StepPayment({ payment, setPayment, subtotal, onBack, onConfirm, submitting, error, storeOpen }) {
+function StepPayment({ payment, setPayment, subtotal, deliveryFee, total, onBack, onConfirm, submitting, error, storeOpen }) {
   const changeForValue = payment.changeFor ? parseFloat(payment.changeFor.replace(',', '.')) : null
-  const troco = payment.method === 'dinheiro' && changeForValue ? changeForValue - subtotal : null
+  const troco = payment.method === 'dinheiro' && changeForValue ? changeForValue - total : null
   const trocoInvalido = troco !== null && troco < 0
   const valid = payment.method && (payment.method !== 'dinheiro' || (changeForValue && !trocoInvalido))
 
@@ -212,9 +229,19 @@ function StepPayment({ payment, setPayment, subtotal, onBack, onConfirm, submitt
         </div>
       )}
 
-      <div className="flex justify-between text-lg font-semibold border-t border-crust/10 pt-4 mb-4">
-        <span>Total</span>
-        <span>{formatCurrency(subtotal)}</span>
+      <div className="border-t border-crust/10 pt-4 mb-4 space-y-1">
+        <div className="flex justify-between text-sm text-crust/60">
+          <span>Subtotal</span>
+          <span>{formatCurrency(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm text-crust/60">
+          <span>Frete</span>
+          <span>{deliveryFee > 0 ? formatCurrency(deliveryFee) : 'Grátis'}</span>
+        </div>
+        <div className="flex justify-between text-lg font-semibold pt-1">
+          <span>Total</span>
+          <span>{formatCurrency(total)}</span>
+        </div>
       </div>
 
       {error && <p className="text-tomato text-sm mb-3">{error}</p>}

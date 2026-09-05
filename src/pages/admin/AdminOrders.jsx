@@ -162,7 +162,12 @@ function OrderCard({ order, onUpdate, highlight }) {
           {order.address?.complement && <p><span className="text-crust/50">Complemento:</span> {order.address.complement}</p>}
           {order.address?.reference && <p><span className="text-crust/50">Referência:</span> {order.address.reference}</p>}
         </div>
-        <span className="text-sm font-semibold flex-shrink-0">{formatCurrency(order.subtotal)}</span>
+        <div className="text-right flex-shrink-0">
+          <span className="text-sm font-semibold block">{formatCurrency(order.total ?? order.subtotal)}</span>
+          {order.deliveryFee > 0 && (
+            <span className="text-xs text-crust/40 block">+ {formatCurrency(order.deliveryFee)} frete</span>
+          )}
+        </div>
       </div>
       <ul className="text-sm text-crust/80 mb-2">
         {order.items?.map((item) => (

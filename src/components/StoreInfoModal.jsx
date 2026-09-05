@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { WEEKDAYS } from '../utils/storeHours.js'
+import { formatCurrency } from '../utils/formatCurrency.js'
 
 const TABS = ['Sobre', 'Horário', 'Pagamento', 'Entrega']
 
@@ -13,10 +14,8 @@ export default function StoreInfoModal({ open, onClose, settings }) {
   const instagram = settings?.instagram || ''
   const address = settings?.address || ''
   const pixKey = settings?.pixKey || ''
-  const deliveryAreas = (settings?.deliveryAreas || '')
-    .split(',')
-    .map((a) => a.trim())
-    .filter(Boolean)
+  const deliveryAreas = Array.isArray(settings?.deliveryAreas) ? settings.deliveryAreas : []
+  const freeDeliveryEnabled = !!settings?.freeDeliveryEnabled
 
   return (
     <div className="fixed inset-0 z-50 bg-paper flex flex-col">
@@ -41,7 +40,7 @@ export default function StoreInfoModal({ open, onClose, settings }) {
         {tab === 'Sobre' && <SobreTab logoUrl={logoUrl} phone={phone} instagram={instagram} address={address} />}
         {tab === 'Horário' && <HorarioTab hours={settings?.hours} />}
         {tab === 'Pagamento' && <PagamentoTab pixKey={pixKey} />}
-        {tab === 'Entrega' && <EntregaTab areas={deliveryAreas} />}
+        {tab === 'Entrega' && <EntregaTab areas={deliveryAreas} freeDeliveryEnabled={freeDeliveryEnabled} />}
       </div>
     </div>
   )
@@ -137,13 +136,16 @@ function PagamentoTab({ pixKey }) {
   )
 }
 
-function EntregaTab({ areas }) {
+function EntregaTab({ areas, freeDeliveryEnabled }) {
   const [search, setSearch] = useState('')
-  const filtered = areas.filter((a) => a.toLowerCase().includes(search.toLowerCase()))
+  const filtered = areas.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div>
       <h3 className="font-semibold mb-3">🗺️ Áreas onde entregamos</h3>
+      {freeDeliveryEnabled && (
+        <p className="text-sm text-basil mb-3">🎉 Frete grátis para todos os bairros no momento!</p>
+      )}
       <input
         className="input-field mb-4"
         placeholder="Buscar bairro"
@@ -151,9 +153,14 @@ function EntregaTab({ areas }) {
         onChange={(e) => setSearch(e.target.value)}
       />
       {areas.length === 0 && <p className="text-sm text-crust/50">Nenhum bairro cadastrado ainda.</p>}
-      <div className="flex flex-wrap gap-2">
+      <div className="space-y-2">
         {filtered.map((area) => (
-          <span key={area} className="bg-crust/5 rounded-full px-4 py-2 text-sm">{area}</span>
+          <div key={area.name} className="flex justify-between items-center bg-crust/5 rounded-sm px-4 py-2.5 text-sm">
+            <span>{area.name}</span>
+            <span className={freeDeliveryEnabled || !area.fee ? 'text-basil font-medium' : 'text-crust/70'}>
+              {freeDeliveryEnabled || !area.fee ? 'Grátis' : formatCurrency(area.fee)}
+            </span>
+          </div>
         ))}
       </div>
     </div>

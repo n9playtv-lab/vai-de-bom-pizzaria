@@ -10,8 +10,18 @@ const SETTINGS_DOC = doc(db, 'settings', 'general')
 
 const EMPTY = {
   coverUrl: '', logoUrl: '', name: '', tagline: '', rating: '5.0',
-  cnpj: '', address: '', phone: '', instagram: '', pixKey: '', deliveryAreas: '',
+  cnpj: '', address: '', phone: '', instagram: '', pixKey: '',
+  deliveryAreas: [], freeDeliveryEnabled: false, defaultDeliveryFee: '',
   hours: defaultHours(), statusOverride: 'auto',
+}
+
+// Converte o formato antigo (texto separado por virgula) para a lista nova {name, fee}
+function normalizeDeliveryAreas(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',').map((name) => ({ name: name.trim(), fee: '' })).filter((a) => a.name)
+  }
+  return []
 }
 
 export default function AdminSettings() {
@@ -22,7 +32,12 @@ export default function AdminSettings() {
     const unsub = onSnapshot(SETTINGS_DOC, (snap) => {
       if (snap.exists()) {
         const data = snap.data()
-        setForm((f) => ({ ...f, ...data, hours: data.hours || defaultHours() }))
+        setForm((f) => ({
+          ...f,
+          ...data,
+          hours: data.hours || defaultHours(),
+          deliveryAreas: normalizeDeliveryAreas(data.deliveryAreas),
+        }))
       }
     })
     return unsub
@@ -30,9 +45,30 @@ export default function AdminSettings() {
 
   async function handleSave(e) {
     e.preventDefault()
-    await setDoc(SETTINGS_DOC, form, { merge: true })
+    const cleanAreas = form.deliveryAreas
+      .filter((a) => a.name.trim())
+      .map((a) => ({ name: a.name.trim(), fee: parseFloat(String(a.fee).replace(',', '.')) || 0 }))
+    await setDoc(SETTINGS_DOC, {
+      ...form,
+      deliveryAreas: cleanAreas,
+      defaultDeliveryFee: parseFloat(String(form.defaultDeliveryFee).replace(',', '.')) || 0,
+    }, { merge: true })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  function updateArea(index, patch) {
+    const areas = [...form.deliveryAreas]
+    areas[index] = { ...areas[index], ...patch }
+    setForm({ ...form, deliveryAreas: areas })
+  }
+
+  function addArea() {
+    setForm({ ...form, deliveryAreas: [...form.deliveryAreas, { name: '', fee: '' }] })
+  }
+
+  function removeArea(index) {
+    setForm({ ...form, deliveryAreas: form.deliveryAreas.filter((_, i) => i !== index) })
   }
 
   function updateDay(index, patch) {
@@ -161,11 +197,50 @@ export default function AdminSettings() {
               <input className="input-field" placeholder="Ex: 81992842266" value={form.pixKey}
                 onChange={(e) => setForm({ ...form, pixKey: e.target.value })} />
             </div>
+          </section>
+
+          {/* Frete de entrega */}
+          <section className="space-y-3 border border-crust/10 rounded-sm p-4">
+            <h2 className="font-semibold">Frete de entrega</h2>
+
             <div>
-              <label className="text-sm text-crust/70 block mb-1">Bairros de entrega (separados por vírgula)</label>
-              <textarea className="input-field" rows={3} placeholder="Centro, Alto São Miguel, Caetés I, Caetés II..."
-                value={form.deliveryAreas}
-                onChange={(e) => setForm({ ...form, deliveryAreas: e.target.value })} />
+              <label className="text-sm text-crust/70 block mb-1">Frete grátis para todos os bairros agora?</label>
+              <div className="flex gap-2">
+                {[[true, 'Sim, grátis'], [false, 'Não, cobrar por bairro']].map(([value, label]) => (
+                  <label key={label} className={`flex-1 text-center border rounded-sm px-3 py-2 cursor-pointer text-sm ${form.freeDeliveryEnabled === value ? 'border-tomato bg-tomato/5' : 'border-crust/20'}`}>
+                    <input type="radio" className="hidden" checked={form.freeDeliveryEnabled === value}
+                      onChange={() => setForm({ ...form, freeDeliveryEnabled: value })} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-crust/40 mt-1">
+                Isso liga/desliga o frete grátis pra todo mundo de uma vez, sem precisar apagar os valores de cada bairro.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm text-crust/70 block mb-1">Taxa padrão (bairros que não estão na lista abaixo)</label>
+              <input className="input-field" placeholder="Ex: 8,00" value={form.defaultDeliveryFee}
+                onChange={(e) => setForm({ ...form, defaultDeliveryFee: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-sm text-crust/70 block mb-2">Taxa por bairro</label>
+              <div className="space-y-2">
+                {form.deliveryAreas.map((area, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input className="input-field flex-1" placeholder="Nome do bairro" value={area.name}
+                      onChange={(e) => updateArea(i, { name: e.target.value })} />
+                    <input className="input-field w-24" placeholder="R$" value={area.fee}
+                      onChange={(e) => updateArea(i, { fee: e.target.value })} />
+                    <button type="button" className="text-tomato px-2" onClick={() => removeArea(i)}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <button type="button" className="btn-outline text-sm px-4 py-2 mt-2" onClick={addArea}>
+                + Adicionar bairro
+              </button>
             </div>
           </section>
 

@@ -45,9 +45,21 @@ export default function OrderStatus() {
               <span>{formatCurrency(item.price * item.qty)}</span>
             </div>
           ))}
-          <div className="flex justify-between font-semibold border-t border-crust/10 mt-3 pt-3">
-            <span>Total</span>
-            <span>{formatCurrency(order.subtotal)}</span>
+          <div className="border-t border-crust/10 mt-3 pt-3 space-y-1">
+            <div className="flex justify-between text-sm text-crust/60">
+              <span>Subtotal</span>
+              <span>{formatCurrency(order.subtotal)}</span>
+            </div>
+            {order.deliveryFee != null && (
+              <div className="flex justify-between text-sm text-crust/60">
+                <span>Frete</span>
+                <span>{order.deliveryFee > 0 ? formatCurrency(order.deliveryFee) : 'Grátis'}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold pt-1">
+              <span>Total</span>
+              <span>{formatCurrency(order.total ?? order.subtotal)}</span>
+            </div>
           </div>
         </div>
 
